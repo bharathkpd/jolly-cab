@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   MapPin, Car, Compass, ArrowRight,
   Gift, Star, Menu, Bell, User2, ShieldCheck, DollarSign,
-  PhoneCall, Sparkles, ShieldAlert, Plane, Clock, Navigation
+  PhoneCall, Sparkles, ShieldAlert, Plane, Clock, Navigation, MessageCircle
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
@@ -21,12 +21,24 @@ export const Home: React.FC = () => {
   const { toggleDrawer } = useUiStore();
   const [isLoading, setIsLoading] = useState(true);
   const [recentBookings, setRecentBookings] = useState<any[]>([]);
+  const [activeBannerIdx, setActiveBannerIdx] = useState(0);
+  const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadAllAdminData();
     const t = setTimeout(() => setIsLoading(false), 700);
     return () => clearTimeout(t);
   }, [loadAllAdminData]);
+
+  // Auto-scroll banner carousel
+  useEffect(() => {
+    const activeBannerList = banners.filter(b => b.active);
+    if (activeBannerList.length <= 1) return;
+    const iv = setInterval(() => {
+      setActiveBannerIdx(prev => (prev + 1) % activeBannerList.length);
+    }, 3500);
+    return () => clearInterval(iv);
+  }, [banners]);
 
   useEffect(() => {
     try {
@@ -169,13 +181,36 @@ export const Home: React.FC = () => {
           </div>
         </div>
 
-        {/* Location Display */}
-        <div className="mt-5 flex items-center gap-2 relative z-10 bg-white/20 backdrop-blur-xs py-1.5 px-3 rounded-full w-fit max-w-[260px] border border-white/10 shadow-xs">
-          <MapPin className="w-3.5 h-3.5 stroke-[2.5] flex-shrink-0" style={{ color: '#121212' }} />
-          <span className="text-[10px] font-black truncate" style={{ color: '#121212' }}>
-            Kukatpally, Hyderabad, Telangana
-          </span>
+        {/* Live Offer Ticker */}
+        <div
+          className="relative overflow-hidden h-8 flex items-center"
+          style={{ background: '#121212', borderRadius: '0 0 12px 12px', marginTop: '-1px' }}
+        >
+          <div className="absolute inset-y-0 left-0 w-8 z-10" style={{ background: 'linear-gradient(to right, #121212, transparent)' }} />
+          <div className="absolute inset-y-0 right-0 w-8 z-10" style={{ background: 'linear-gradient(to left, #121212, transparent)' }} />
+          <div
+            className="flex gap-8 whitespace-nowrap text-[9px] font-black uppercase tracking-widest"
+            style={{ color: '#FFC107', animation: 'marquee 18s linear infinite' }}
+          >
+            {[
+              '🎉 Use JOLLYNEW for 10% off your first ride',
+              '✈️ Airport drops from Rs.899 flat rate',
+              '🛕 Srisailam trip special — Rs.150 off with SRISAILAM10',
+              '🌟 4.9 star rated drivers · 100% verified',
+              '📞 24/7 support: 7981232371',
+              '🎉 Use JOLLYNEW for 10% off your first ride',
+              '✈️ Airport drops from Rs.899 flat rate'
+            ].map((msg, i) => (
+              <span key={i}>{msg}</span>
+            ))}
+          </div>
         </div>
+        <style>{`
+          @keyframes marquee {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+          }
+        `}</style>
       </div>
 
       {/* ── Floating content stack ── */}
@@ -299,7 +334,7 @@ export const Home: React.FC = () => {
           </button>
         </div>
 
-        {/* Travel Packages / Banners */}
+        {/* Travel Packages / Banners - Auto Carousel */}
         {banners.filter(b => b.active).length > 0 && (
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between px-1 mb-0.5">
@@ -309,33 +344,57 @@ export const Home: React.FC = () => {
               </h4>
               <span className="text-[9px] font-black text-brand-gold uppercase tracking-wider">Promo active</span>
             </div>
-            {banners.filter(b => b.active).map((banner) => (
-              <button
-                key={banner.id}
-                onClick={() => handleBannerClick(banner.id)}
-                className="w-full text-left rounded-3xl p-5 relative overflow-hidden active:scale-[0.98] transition-all shadow-md bg-gradient-to-br from-brand-dark to-stone-900 border border-brand-gold/15"
-              >
-                <div className="absolute right-2 -bottom-5 opacity-8 pointer-events-none">
-                  <Gift className="w-28 h-28 text-brand-gold" />
+            {/* Carousel with active dot */}
+            <div className="relative">
+              {banners.filter(b => b.active).map((banner, idx) => (
+                <div
+                  key={banner.id}
+                  style={{ display: idx === activeBannerIdx ? 'block' : 'none' }}
+                >
+                  <button
+                    onClick={() => handleBannerClick(banner.id)}
+                    className="w-full text-left rounded-3xl p-5 relative overflow-hidden active:scale-[0.98] transition-all shadow-md bg-gradient-to-br from-brand-dark to-stone-900 border border-brand-gold/15"
+                  >
+                    <div className="absolute right-2 -bottom-5 opacity-8 pointer-events-none">
+                      <Gift className="w-28 h-28 text-brand-gold" />
+                    </div>
+                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-widest mb-2 bg-[#FFC107]/10 text-brand-gold border border-brand-gold/20">
+                      {banner.festivalName}
+                    </span>
+                    <h4 className="text-sm font-bold leading-snug max-w-[85%] text-white font-display">
+                      {banner.title}
+                    </h4>
+                    <p className="text-[10px] mt-1 max-w-[90%] text-gray-400">{banner.subtitle}</p>
+                    <div className="mt-4 flex items-center gap-3 border-t border-white/5 pt-3">
+                      <span className="text-[9px] font-bold text-gray-400">Coupon:</span>
+                      <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-bold font-mono tracking-wider bg-white/5 border border-white/10 text-brand-gold">
+                        {banner.couponCode}
+                      </span>
+                      <span className="ml-auto text-[9px] font-black px-3 py-1 bg-[#FFC107] text-[#121212] rounded-xl shadow-sm">
+                        Book Now &rarr;
+                      </span>
+                    </div>
+                  </button>
                 </div>
-                <span className="inline-block px-2.5 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-widest mb-2 bg-[#FFC107]/10 text-brand-gold border border-brand-gold/20">
-                  {banner.festivalName}
-                </span>
-                <h4 className="text-sm font-bold leading-snug max-w-[85%] text-white font-display">
-                  {banner.title}
-                </h4>
-                <p className="text-[10px] mt-1 max-w-[90%] text-gray-400">{banner.subtitle}</p>
-                <div className="mt-4 flex items-center gap-3 border-t border-white/5 pt-3">
-                  <span className="text-[9px] font-bold text-gray-400">Coupon:</span>
-                  <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-bold font-mono tracking-wider bg-white/5 border border-white/10 text-brand-gold">
-                    {banner.couponCode}
-                  </span>
-                  <span className="ml-auto text-[9px] font-black px-3 py-1 bg-[#FFC107] text-[#121212] rounded-xl shadow-sm">
-                    Book Now →
-                  </span>
+              ))}
+              {/* Carousel dots */}
+              {banners.filter(b => b.active).length > 1 && (
+                <div className="flex justify-center gap-1.5 mt-2">
+                  {banners.filter(b => b.active).map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveBannerIdx(i)}
+                      className="rounded-full transition-all"
+                      style={{
+                        width: i === activeBannerIdx ? '20px' : '6px',
+                        height: '6px',
+                        background: i === activeBannerIdx ? '#FFC107' : '#E0E0E0'
+                      }}
+                    />
+                  ))}
                 </div>
-              </button>
-            ))}
+              )}
+            </div>
           </div>
         )}
 
@@ -525,7 +584,7 @@ export const Home: React.FC = () => {
             <span className="w-1.5 h-4.5 rounded-full bg-red-500 animate-pulse" />
             Customer Support & Safety
           </h4>
-          
+
           <div className="rounded-3xl p-4.5 flex items-center justify-between gap-4 bg-red-500/5 border border-red-500/15 shadow-sm">
             <div className="flex items-center gap-3.5">
               <div className="w-11 h-11 rounded-2xl flex items-center justify-center bg-red-500/10 border border-red-500/20 flex-shrink-0">
@@ -545,6 +604,22 @@ export const Home: React.FC = () => {
               SOS Call
             </button>
           </div>
+
+          {/* WhatsApp Quick Book */}
+          <button
+            onClick={() => window.open('https://wa.me/917981232371?text=Hi%20Jolly%20Cabs%2C%20I%20want%20to%20book%20a%20cab!', '_blank')}
+            className="w-full rounded-3xl p-4 flex items-center gap-3.5 transition-all active:scale-[0.98] shadow-sm"
+            style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)', border: '1px solid rgba(37,211,102,0.3)' }}
+          >
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-white/20 flex-shrink-0">
+              <MessageCircle className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1 text-left">
+              <span className="text-[9px] font-bold uppercase tracking-widest text-white/70 block">Quick Book</span>
+              <p className="text-xs font-black text-white mt-0.5">WhatsApp Us at 7981232371</p>
+            </div>
+            <ArrowRight className="w-4 h-4 text-white/70" />
+          </button>
         </div>
 
       </div>

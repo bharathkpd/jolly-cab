@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, MapPin, Star, FileText, Navigation, XCircle, Car, RefreshCw } from 'lucide-react';
+import { Clock, MapPin, Star, FileText, Navigation, XCircle, Car, RefreshCw, User, TrendingUp } from 'lucide-react';
 import { useBookingStore } from '../../store/bookingStore';
 import { useAuthStore } from '../../store/authStore';
 import { Booking } from '../../types';
@@ -134,23 +134,30 @@ export const Trips: React.FC = () => {
         )}
 
         {filteredTrips.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center py-24">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: '#F0F0F0' }}>
-              <Car className="w-8 h-8" style={{ color: '#ddd' }} />
+          <div className="flex-1 flex flex-col items-center justify-center text-center py-20">
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center mb-4 animate-float"
+              style={{ background: 'linear-gradient(135deg, #FFC107/10, #FFC107/5)', border: '2px dashed #FFC10730' }}
+            >
+              {activeTab === 'active'
+                ? <Navigation className="w-9 h-9" style={{ color: '#FFC107' }} />
+                : activeTab === 'completed'
+                ? <TrendingUp className="w-9 h-9" style={{ color: '#4CAF50' }} />
+                : <XCircle className="w-9 h-9" style={{ color: '#F44336' }} />}
             </div>
             <h3 className="font-bold text-sm" style={{ color: '#121212' }}>
-              {activeTab === 'active' ? 'No Active Rides' : activeTab === 'completed' ? 'No Completed Rides' : 'No Cancelled Rides'}
+              {activeTab === 'active' ? 'No Active Rides' : activeTab === 'completed' ? 'No Completed Rides Yet' : 'No Cancelled Rides'}
             </h3>
             <p className="text-xs mt-1 max-w-[200px]" style={{ color: '#888' }}>
-              {activeTab === 'active' ? 'Your booked rides will appear here.' : 'Completed rides will appear here.'}
+              {activeTab === 'active' ? 'Your booked rides will appear here.' : activeTab === 'completed' ? 'Complete a ride to see history here.' : 'Cancelled bookings appear here.'}
             </p>
             {activeTab === 'active' && (
               <button
                 onClick={() => navigate('/booking')}
-                className="mt-4 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white"
-                style={{ background: '#FFC107', color: '#121212' }}
+                className="mt-5 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-wider shadow-md transition-all active:scale-95"
+                style={{ background: '#FFC107', color: '#121212', fontFamily: 'Poppins, sans-serif' }}
               >
-                Book a Ride
+                Book a Ride Now
               </button>
             )}
           </div>
@@ -161,7 +168,7 @@ export const Trips: React.FC = () => {
             return (
               <div
                 key={trip.id}
-                className="bg-white rounded-3xl p-4 flex flex-col gap-3"
+                className="bg-white rounded-3xl p-4 flex flex-col gap-3 animate-slide-up"
                 style={{ border: '1px solid #F0F0F0' }}
               >
                 {/* Trip header */}
@@ -182,15 +189,35 @@ export const Trips: React.FC = () => {
                   </span>
                 </div>
 
+                {/* Driver info for completed */}
+                {trip.status === 'trip_completed' && trip.driverName && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-2xl" style={{ background: '#F8F8F8' }}>
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-[9px] font-black" style={{ background: 'rgba(255,193,7,0.15)', color: '#FFC107' }}>
+                      {trip.driverName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="flex-1">
+                      <span className="text-[10px] font-bold text-[#121212] block">{trip.driverName}</span>
+                      <span className="text-[8.5px] text-gray-400">Verified Driver · {trip.vehicleNumber}</span>
+                    </div>
+                    {trip.customerRating && (
+                      <div className="flex items-center gap-0.5">
+                        {[1,2,3,4,5].map(s => (
+                          <Star key={s} className={`w-3 h-3 ${s <= trip.customerRating! ? 'fill-[#FFC107] text-[#FFC107]' : 'text-gray-200'}`} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Route */}
                 <div className="flex flex-col gap-1.5">
                   <div className="flex items-start gap-2">
-                    <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: '#FFC107' }} />
+                    <div className="w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0" style={{ background: '#FFC107', border: '2px solid white', boxShadow: '0 0 0 1px #FFC107' }} />
                     <p className="text-[11px] font-semibold truncate max-w-[260px]" style={{ color: '#121212' }}>{trip.pickupAddress}</p>
                   </div>
                   {trip.tripType !== 'rental' && (
                     <div className="flex items-start gap-2">
-                      <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: '#F44336' }} />
+                      <div className="w-2.5 h-2.5 rounded flex-shrink-0 mt-1" style={{ background: '#F44336', border: '2px solid white', boxShadow: '0 0 0 1px #F44336' }} />
                       <p className="text-[11px] font-semibold truncate max-w-[260px]" style={{ color: '#121212' }}>{trip.dropAddress}</p>
                     </div>
                   )}
@@ -198,9 +225,15 @@ export const Trips: React.FC = () => {
 
                 {/* Footer */}
                 <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: '#F5F5F5' }}>
-                  <span className="text-[10px]" style={{ color: '#888' }}>
-                    {trip.vehicleDetails?.name} · <span className="font-black font-mono" style={{ color: '#121212' }}>₹{trip.fareBreakdown?.total}</span>
-                  </span>
+                  <div>
+                    <span className="text-[10px] font-semibold" style={{ color: '#888' }}>
+                      {trip.vehicleDetails?.name}
+                    </span>
+                    <span className="font-black font-mono text-xs ml-1.5" style={{ color: '#121212' }}>Rs.{trip.fareBreakdown?.total}</span>
+                    {trip.fareBreakdown?.discount > 0 && (
+                      <span className="ml-1.5 text-[9px] font-bold text-green-600">-Rs.{trip.fareBreakdown.discount} saved</span>
+                    )}
+                  </div>
 
                   <div className="flex items-center gap-2">
                     {trip.status === 'trip_completed' && (
@@ -208,10 +241,11 @@ export const Trips: React.FC = () => {
                         <button
                           onClick={() => handleRebook(trip)}
                           title="Rebook"
-                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all active:scale-95"
-                          style={{ background: 'rgba(255,193,7,0.1)', border: '1px solid rgba(255,193,7,0.25)' }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[9px] font-black transition-all active:scale-95 uppercase tracking-wider"
+                          style={{ background: 'rgba(255,193,7,0.1)', border: '1px solid rgba(255,193,7,0.25)', color: '#E6AC00' }}
                         >
-                          <RefreshCw className="w-3.5 h-3.5" style={{ color: '#FFC107' }} />
+                          <RefreshCw className="w-3 h-3" />
+                          Rebook
                         </button>
                         <button
                           onClick={() => setSelectedInvoice(trip)}
@@ -228,10 +262,11 @@ export const Trips: React.FC = () => {
                         <button
                           onClick={() => navigate(`/track/${trip.id}`)}
                           title="Track"
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-white transition-all active:scale-95"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-white text-[9px] font-black transition-all active:scale-95 uppercase tracking-wider"
                           style={{ background: '#121212' }}
                         >
-                          <Navigation className="w-3.5 h-3.5" style={{ color: '#FFC107' }} />
+                          <Navigation className="w-3 h-3" style={{ color: '#FFC107' }} />
+                          Track
                         </button>
                         <button
                           onClick={() => { if (window.confirm('Cancel this booking?')) cancelBooking(trip.id); }}

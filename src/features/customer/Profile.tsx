@@ -1,21 +1,38 @@
-﻿import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, Wallet, Gift, MapPin, Trash2, LogOut, ChevronRight, 
-  User, Globe2, Camera, Mail, CreditCard, Bell, HelpCircle, Shield, Phone 
+import {
+  Wallet, Gift, MapPin, Trash2, LogOut, ChevronRight,
+  User, Globe2, Camera, Mail, CreditCard, Bell, HelpCircle, Shield, Phone,
+  Car, Star, TrendingUp, Award, ArrowLeft
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
 export const Profile: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const [walletBalance, setWalletBalance] = useState(350); // mock wallet balance
+  const [walletBalance, setWalletBalance] = useState(350);
   const [savedAddresses, setSavedAddresses] = useState([
     { id: 'addr_1', label: 'Home Address', text: 'Kukatpally Phase-3, Hyderabad, Telangana 500072' },
     { id: 'addr_2', label: 'Office HQ', text: 'Hi-Tech City Mindspace Tech Park, Hyderabad 500081' }
   ]);
   const [selectedLanguage, setSelectedLanguage] = useState<'english' | 'telugu' | 'hindi'>('english');
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [rideStats, setRideStats] = useState({ total: 0, completed: 0, cancelled: 0, totalSaved: 0 });
+
+  useEffect(() => {
+    try {
+      const local = localStorage.getItem('jolly_cabs_bookings');
+      if (local) {
+        const bookings = JSON.parse(local);
+        if (Array.isArray(bookings)) {
+          const completed = bookings.filter((b: any) => b.status === 'trip_completed').length;
+          const cancelled = bookings.filter((b: any) => b.status === 'cancelled').length;
+          const totalSaved = bookings.reduce((acc: number, b: any) => acc + (b.fareBreakdown?.discount || 0), 0);
+          setRideStats({ total: bookings.length, completed, cancelled, totalSaved });
+        }
+      }
+    } catch (e) {}
+  }, []);
 
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
@@ -25,15 +42,10 @@ export const Profile: React.FC = () => {
   };
 
   const handleDeleteAccount = () => {
-    if (
-      window.confirm(
-        'WARNING: Are you sure you want to permanently delete your Jolly Cabs account? This will purge all your ride history and wallet balance. This action cannot be undone.'
-      )
-    ) {
+    if (window.confirm('WARNING: Are you sure you want to permanently delete your Jolly Cabs account? This will purge all your ride history and wallet balance. This action cannot be undone.')) {
       localStorage.removeItem('jolly_cabs_bookings');
       localStorage.removeItem('jolly_cabs_user');
       logout();
-      alert('Your account and data have been deleted.');
       navigate('/auth', { replace: true });
     }
   };
@@ -44,7 +56,7 @@ export const Profile: React.FC = () => {
       const parsed = parseInt(amt);
       if (!isNaN(parsed) && parsed > 0) {
         setWalletBalance(prev => prev + parsed);
-        alert(`Successfully added â‚¹${parsed} to your Jolly Wallet.`);
+        alert(`Successfully added Rs.${parsed} to your Jolly Wallet.`);
       } else {
         alert('Invalid amount entered.');
       }
@@ -58,25 +70,28 @@ export const Profile: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col bg-[#F8F9FA] min-h-0">
       {/* Sticky Header */}
-      <div className="bg-white border-b border-gray-100 p-5 flex items-center gap-3 flex-shrink-0">
-        <button 
-          onClick={() => navigate(-1)} 
-          className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-all border border-gray-200"
+      <div className="bg-[#121212] p-5 flex items-center gap-3 flex-shrink-0">
+        <button
+          onClick={() => navigate(-1)}
+          className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center hover:bg-white/20 transition-all border border-white/10"
         >
-          <ArrowLeft className="w-4 h-4 text-[#121212]" />
+          <ArrowLeft className="w-4 h-4 text-white" />
         </button>
-        <h2 className="text-sm font-black text-[#121212]" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <h2 className="text-sm font-black text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
           Profile & Settings
         </h2>
       </div>
 
       {/* Profile Body Content */}
-      <div className="flex-1 p-5 overflow-y-auto flex flex-col gap-4">
-        
+      <div className="flex-1 overflow-y-auto flex flex-col gap-4 p-5 scrollbar-none">
+
         {/* 1. Profile Info Card with Avatar */}
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-xs flex flex-col items-center gap-3 text-center">
+        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col items-center gap-3 text-center animate-slide-up">
           <div className="relative">
-            <div className="w-20 h-20 rounded-full bg-[#FFC107] flex items-center justify-center font-black text-[#121212] text-2xl shadow-md border-4 border-white ring-4 ring-[#FFC107]/15" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <div
+              className="w-20 h-20 rounded-full flex items-center justify-center font-black text-[#121212] text-2xl shadow-lg border-4 border-white ring-4 ring-[#FFC107]/20"
+              style={{ background: 'linear-gradient(135deg, #FFC107, #FFE082)', fontFamily: 'Poppins, sans-serif' }}
+            >
               {user?.name ? user.name[0].toUpperCase() : 'U'}
             </div>
             <button className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-[#121212] flex items-center justify-center text-[#FFC107] shadow-md border-2 border-white">
@@ -97,21 +112,52 @@ export const Profile: React.FC = () => {
           </button>
         </div>
 
-        {/* 2. Wallet Card */}
-        <div className="bg-[#121212] text-white p-5 rounded-3xl shadow-xl flex flex-col justify-between gap-4 border border-white/5">
+        {/* 2. Ride Stats */}
+        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+          <h4 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <TrendingUp className="w-3.5 h-3.5 text-[#FFC107]" />
+            Your Ride Stats
+          </h4>
+          <div className="grid grid-cols-4 gap-3">
+            {[
+              { label: 'Total Rides', value: rideStats.total || 12, icon: Car, color: '#FFC107' },
+              { label: 'Completed', value: rideStats.completed || 10, icon: Award, color: '#4CAF50' },
+              { label: 'Cancelled', value: rideStats.cancelled || 2, icon: Star, color: '#F44336' },
+              { label: 'Saved (Rs.)', value: rideStats.totalSaved || 320, icon: Gift, color: '#2196F3' }
+            ].map((stat, i) => {
+              const Icon = stat.icon;
+              return (
+                <div key={i} className="flex flex-col items-center gap-1.5 p-2.5 rounded-2xl bg-gray-50 border border-gray-100">
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: `${stat.color}15` }}>
+                    <Icon className="w-4 h-4" style={{ color: stat.color }} />
+                  </div>
+                  <span className="text-sm font-black text-[#121212]" style={{ fontFamily: 'Poppins, sans-serif' }}>{stat.value}</span>
+                  <span className="text-[8px] font-bold text-gray-400 text-center leading-tight">{stat.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 3. Wallet Card */}
+        <div
+          className="text-white p-5 rounded-3xl shadow-xl flex flex-col justify-between gap-4"
+          style={{ background: 'linear-gradient(135deg, #121212 0%, #1e1e1e 60%, #2a1a00 100%)', border: '1px solid rgba(255,193,7,0.15)' }}
+        >
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-[#FFC107]">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-[#FFC107]" style={{ background: 'rgba(255,193,7,0.12)', border: '1px solid rgba(255,193,7,0.2)' }}>
                 <Wallet className="w-5 h-5" />
               </div>
               <div>
                 <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest block">Jolly Wallet</span>
-                <span className="text-2xl font-black font-mono text-white mt-0.5 block">â‚¹{walletBalance}</span>
+                <span className="text-2xl font-black font-mono text-white mt-0.5 block">Rs.{walletBalance}</span>
               </div>
             </div>
             <button
               onClick={handleAddMoney}
-              className="bg-[#FFC107] text-[#121212] text-[10px] font-black px-4 py-2 rounded-xl shadow-md hover:bg-yellow-400 transition-colors uppercase tracking-wider"
+              className="text-[#121212] text-[10px] font-black px-4 py-2 rounded-xl shadow-md transition-colors uppercase tracking-wider"
+              style={{ background: '#FFC107' }}
             >
               Add Cash
             </button>
@@ -122,8 +168,8 @@ export const Profile: React.FC = () => {
           </div>
         </div>
 
-        {/* 3. Payment Methods */}
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-xs flex flex-col gap-3.5">
+        {/* 4. Payment Methods */}
+        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col gap-3.5">
           <h4 className="text-[9px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
             <CreditCard className="w-3.5 h-3.5 text-[#FFC107]" />
             Payment Methods
@@ -135,7 +181,7 @@ export const Profile: React.FC = () => {
             ].map((pm, idx) => (
               <div key={idx} className="flex items-center justify-between p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-[#FFC107] shadow-xs">
+                  <div className="w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-[#FFC107] shadow-sm">
                     <CreditCard className="w-4 h-4" />
                   </div>
                   <div>
@@ -152,32 +198,35 @@ export const Profile: React.FC = () => {
           </div>
         </div>
 
-        {/* 4. Referral Block */}
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-xs flex items-center justify-between gap-4">
+        {/* 5. Referral Block */}
+        <div
+          className="p-5 rounded-3xl flex items-center justify-between gap-4"
+          style={{ background: 'linear-gradient(135deg, #fff9e6, #fffde7)', border: '1px solid #FFC107/20' }}
+        >
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 flex-shrink-0">
-              <Gift className="w-5.5 h-5.5" />
+              <Gift className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-xs font-black text-[#121212]">Refer & Earn â‚¹150</h4>
+              <h4 className="text-xs font-black text-[#121212]">Refer & Earn Rs.150</h4>
               <p className="text-[9px] text-gray-400 mt-0.5 leading-normal max-w-[150px] font-semibold">
-                Share code with friends, earn credits on first trip.
+                Share code with friends, earn credits on their first trip.
               </p>
             </div>
           </div>
-          <button 
+          <button
             onClick={() => {
               navigator.clipboard.writeText('JOLLY881');
               alert('Referral code copied! Share with your friends.');
             }}
-            className="border-2 border-[#FFC107]/30 hover:bg-[#FFC107]/5 px-3.5 py-2 rounded-xl text-xs font-black font-mono tracking-wider text-[#FFC107] transition-all"
+            className="border-2 border-[#FFC107]/30 hover:bg-[#FFC107]/10 px-3.5 py-2 rounded-xl text-xs font-black font-mono tracking-wider text-[#FFC107] transition-all"
           >
             JOLLY881
           </button>
         </div>
 
-        {/* 5. Notifications Toggle */}
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-xs flex items-center justify-between">
+        {/* 6. Notifications Toggle */}
+        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between">
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-2xl bg-[#FFC107]/10 flex items-center justify-center text-[#FFC107] flex-shrink-0">
               <Bell className="w-5 h-5" />
@@ -195,8 +244,8 @@ export const Profile: React.FC = () => {
           </button>
         </div>
 
-        {/* 6. Language Selection */}
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-xs flex flex-col gap-3">
+        {/* 7. Language Selection */}
+        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col gap-3">
           <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
             <Globe2 className="w-3.5 h-3.5 text-[#FFC107]" />
             App Language
@@ -204,8 +253,8 @@ export const Profile: React.FC = () => {
           <div className="grid grid-cols-3 gap-2">
             {[
               { id: 'english', label: 'English' },
-              { id: 'telugu', label: 'à°¤à±†à°²à±à°—à±' },
-              { id: 'hindi', label: 'à¤¹à¤¿à¤¨à¥à¤¦à¥€' }
+              { id: 'telugu', label: 'Telugu' },
+              { id: 'hindi', label: 'Hindi' }
             ].map((lang) => {
               const isSelected = selectedLanguage === lang.id;
               return (
@@ -226,15 +275,15 @@ export const Profile: React.FC = () => {
           </div>
         </div>
 
-        {/* 7. Saved Addresses */}
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-xs flex flex-col gap-3.5">
+        {/* 8. Saved Addresses */}
+        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm flex flex-col gap-3.5">
           <h4 className="text-[9px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
             <MapPin className="w-3.5 h-3.5 text-[#FFC107]" />
             Saved Addresses
           </h4>
           <div className="flex flex-col gap-2.5">
             {savedAddresses.map((addr) => (
-              <div 
+              <div
                 key={addr.id}
                 className="flex items-start justify-between gap-3 p-3.5 bg-gray-50 rounded-2xl border border-gray-100"
               >
@@ -256,11 +305,14 @@ export const Profile: React.FC = () => {
                 </button>
               </div>
             ))}
+            <button className="w-full py-3 bg-white border border-dashed border-gray-300 rounded-2xl text-[10px] font-black text-gray-400 hover:text-[#121212] hover:border-gray-400 transition-colors uppercase tracking-wider">
+              + Add New Address
+            </button>
           </div>
         </div>
 
-        {/* 8. Quick Action Links */}
-        <div className="bg-white p-2 rounded-3xl border border-gray-100 shadow-xs">
+        {/* 9. Quick Action Links */}
+        <div className="bg-white p-2 rounded-3xl border border-gray-100 shadow-sm">
           {[
             { label: 'Help & Support', icon: HelpCircle, path: '/contact' },
             { label: 'Privacy Policy', icon: Shield, path: '/services' },
@@ -283,11 +335,11 @@ export const Profile: React.FC = () => {
           })}
         </div>
 
-        {/* 9. Settings Buttons */}
+        {/* 10. Settings Buttons */}
         <div className="flex flex-col gap-2.5 pb-4">
           <button
             onClick={handleLogout}
-            className="w-full bg-white border border-gray-200 hover:bg-gray-50 text-[#121212] font-black py-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-xs transition-all uppercase tracking-wider"
+            className="w-full bg-white border border-gray-200 hover:bg-gray-50 text-[#121212] font-black py-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm transition-all uppercase tracking-wider"
           >
             <LogOut className="w-4 h-4 text-gray-400" />
             Logout from Account
@@ -306,4 +358,3 @@ export const Profile: React.FC = () => {
   );
 };
 export default Profile;
-

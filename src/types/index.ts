@@ -105,6 +105,8 @@ export interface Booking {
   fareBreakdown: FareBreakdown;
   createdAt: string;
   updatedAt: string;
+  customerRating?: number;
+  customerComment?: string;
 }
 
 export interface Driver {
