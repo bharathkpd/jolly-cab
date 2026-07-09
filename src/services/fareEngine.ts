@@ -114,27 +114,28 @@ export const calculateFare = (input: FareCalculationInput): FareCalculationResul
     nightChargeCost = pricing.nightCharges * (tripType === 'rental' || tripType.startsWith('outstation') ? days : 1);
   }
   
-  // Add night charges into base fare
-  base += nightChargeCost;
+  // 3. Simulated Parking & State Permit Charges
+  const parkingCharges = tripType.startsWith('airport') ? 120 : 0;
+  const permitCharges = (tripType.startsWith('outstation') && distanceKm > 150) ? 250 : 0;
 
-  // 3. Subtotal before taxes & discounts
-  const subtotal = base + extraKm + bata + tollCharges + convenience;
+  // 4. Subtotal before taxes & discounts (convenience is added here)
+  const subtotal = base + extraKm + bata + tollCharges + convenience + nightChargeCost + parkingCharges + permitCharges;
 
-  // 4. Coupon Discount
+  // 5. Coupon Discount
   let discount = 0;
   if (couponDiscountPercent > 0) {
     discount = Math.min(couponMaxDiscount, (subtotal * couponDiscountPercent) / 100);
   }
 
-  // 5. Taxes (GST)
+  // 6. Taxes (GST)
   // GST is 5% on passenger transport services in India
   const taxableAmount = subtotal - discount;
   const gst = Math.round(taxableAmount * (pricing.gstPercent / 100));
 
-  // 6. Grand Total
+  // 7. Grand Total
   const total = Math.round(taxableAmount + gst);
 
-  // 7. Advance Payment Logic
+  // 8. Advance Payment Logic
   // Customers usually pay a 20% advance for outstation/rentals to confirm booking, remainder to driver
   const requiresAdvance = tripType === 'rental' || tripType.startsWith('outstation');
   const advancePercent = requiresAdvance ? 20 : 0;
@@ -142,20 +143,31 @@ export const calculateFare = (input: FareCalculationInput): FareCalculationResul
   const remaining = total - advancePaid;
 
   const breakdown: FareBreakdown = {
-    base: Math.round(base),
+    // Legacy support mapping
+    base: Math.round(base + nightChargeCost), // Keep legacy base including night charges if expected
     extraKm: Math.round(extraKm),
     bata: Math.round(bata),
     tolls: Math.round(tollCharges),
     convenience: Math.round(convenience),
     gst,
     discount: Math.round(discount),
+
+    // User-requested breakdown fields
+    baseFare: Math.round(base),
+    distanceFare: Math.round(extraKm),
+    driverBata: Math.round(bata),
+    tollCharges: Math.round(tollCharges),
+    parkingCharges,
+    permitCharges,
+    nightCharges: nightChargeCost,
+    taxes: gst + Math.round(convenience), // group GST and convenience fee under Taxes
+
     total,
     advancePaid,
     remaining
   };
 
-  // 8. Approximate Price Display (Estimated Fare Range: e.g. ₹4300 - ₹5000)
-  // We apply the margin percentage (e.g. ±5%) to the total fare
+  // 9. Approximate Price Display (Estimated Fare Range: e.g. ₹4300 - ₹5000)
   const marginFactor = marginPercent / 100;
   const estMin = Math.round(total * (1 - marginFactor) / 50) * 50; // Round to nearest 50
   const estMax = Math.round(total * (1 + marginFactor) / 50) * 50;

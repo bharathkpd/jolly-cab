@@ -183,7 +183,16 @@ export const AdminDashboard: React.FC = () => {
         discount: 0,
         total: totalFare,
         advancePaid: 0,
-        remaining: totalFare
+        remaining: totalFare,
+        // Extended breakdown fields
+        baseFare: baseFare,
+        distanceFare: distance * pricePerKm,
+        driverBata: driverBata,
+        tollCharges: toll,
+        parkingCharges: 0,
+        permitCharges: 0,
+        nightCharges: 0,
+        taxes: Math.round(totalFare * 0.05)
       },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()

@@ -10,7 +10,7 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     ac: true,
     fuel: 'Petrol / Diesel',
     transmission: 'Automatic',
-    image: '/vehicles/kia_carens.jpg',
+    image: '/vehicles/suv.png',
     specs: ['Petrol / Diesel', 'Large Space', 'Long distance', 'Cozy Seats'],
     features: ['AC', 'GPS', 'Music', 'USB'],
     pricing: {
@@ -34,7 +34,7 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     ac: true,
     fuel: 'CNG / Petrol',
     transmission: 'Manual',
-    image: '/vehicles/maruti_ertiga.jpg',
+    image: '/vehicles/suv.png',
     specs: ['CNG / Petrol', 'Large Space', 'Long distance', 'Family Ride'],
     features: ['AC', 'GPS', 'Music', 'USB'],
     pricing: {
@@ -58,7 +58,7 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     ac: true,
     fuel: 'Diesel',
     transmission: 'Manual',
-    image: '/vehicles/innova_crysta.jpg',
+    image: '/vehicles/premium_suv.png',
     specs: ['Diesel', 'Large Space', 'Long distance', 'Luxury Cabin'],
     features: ['AC', 'GPS', 'Music', 'USB'],
     pricing: {
@@ -82,7 +82,7 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     ac: true,
     fuel: 'Diesel',
     transmission: 'Automatic',
-    image: '/vehicles/tata_safari.jpg',
+    image: '/vehicles/luxury.png',
     specs: ['Diesel', 'Large Space', 'Long distance', 'High Comfort'],
     features: ['AC', 'GPS', 'Music', 'USB'],
     pricing: {
@@ -106,7 +106,7 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     ac: true,
     fuel: 'Petrol / CNG',
     transmission: 'Manual',
-    image: '/vehicles/swift_dzire.jpg',
+    image: '/vehicles/sedan.png',
     specs: ['Petrol / CNG', 'Small Space', 'Short distance', 'Daily Ride'],
     features: ['AC', 'GPS', 'Music', 'USB'],
     pricing: {
@@ -131,7 +131,7 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     ac: true,
     fuel: 'Petrol / Diesel',
     transmission: 'Manual',
-    image: '/vehicles/mahindra_xuv300.jpg',
+    image: '/vehicles/hatchback.png',
     specs: ['Petrol / Diesel', 'Small Space', 'Short distance', 'Sporty Ride'],
     features: ['AC', 'GPS', 'Music', 'USB'],
     pricing: {
@@ -155,7 +155,7 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     ac: true,
     fuel: 'Petrol / Smart Hybrid',
     transmission: 'Manual',
-    image: '/vehicles/maruti_fronx.jpg',
+    image: '/vehicles/hatchback.png',
     specs: ['Petrol / Smart Hybrid', 'Medium Space', 'Short/Medium distance', 'Smart Crossover'],
     features: ['AC', 'GPS', 'Music', 'USB'],
     pricing: {

@@ -56,6 +56,17 @@ export interface FareBreakdown {
   convenience: number;
   gst: number;
   discount: number;
+  
+  // User-requested breakdown fields
+  baseFare: number;
+  distanceFare: number;
+  driverBata: number;
+  tollCharges: number;
+  parkingCharges: number;
+  permitCharges: number;
+  nightCharges: number;
+  taxes: number;
+
   total: number;
   advancePaid: number;
   remaining: number;

@@ -165,29 +165,30 @@ export const Payment: React.FC = () => {
   ];
 
   return (
-    <div className="screen" style={{ background: '#F5F5F5' }}>
+    <div className="screen" style={{ background: '#F8F9FA' }}>
       {/* Header */}
       <div
-        className="flex-shrink-0 flex items-center gap-3 px-5 py-4"
-        style={{ background: '#121212' }}
+        className="flex-shrink-0 flex items-center gap-3 px-5 py-4.5 border-b"
+        style={{ background: '#fff', borderColor: '#F0F0F0' }}
       >
         <button
           onClick={() => navigate(-1)}
           className="w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-95"
-          style={{ background: 'rgba(255,255,255,0.1)' }}
+          style={{ background: '#F5F5F5', border: '1px solid #EBEBEB' }}
         >
-          <ArrowLeft className="w-4 h-4 text-white" />
+          <ArrowLeft className="w-4 h-4" style={{ color: '#121212' }} />
         </button>
         <div>
-          <h2 className="text-sm font-black text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <h2 className="text-sm font-black" style={{ color: '#121212', fontFamily: 'Poppins, sans-serif' }}>
             Review & Pay
           </h2>
-          <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          <p className="text-[10px] font-semibold" style={{ color: '#aaa' }}>
             {selectedVehicle.name} · {tripType.replace('_', ' ')}
           </p>
         </div>
-        <div className="ml-auto">
-          <Lock className="w-4 h-4" style={{ color: '#FFC107' }} />
+        <div className="ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-lg" style={{ background: '#FFFDE7' }}>
+          <Lock className="w-3 h-3" style={{ color: '#FFC107' }} />
+          <span className="text-[9px] font-black" style={{ color: '#F9A825' }}>SECURED</span>
         </div>
       </div>
 
@@ -195,23 +196,41 @@ export const Payment: React.FC = () => {
       <div className="screen-body p-4 flex flex-col gap-4">
 
         {/* Trip Summary */}
-        <div className="bg-white rounded-3xl p-4" style={{ border: '1px solid #F0F0F0' }}>
-          <h4 className="text-xs font-bold border-b pb-2 mb-3" style={{ color: '#121212', borderColor: '#F5F5F5' }}>
+        <div className="bg-white rounded-3xl p-5 shadow-xs" style={{ border: '1px solid #F0F0F0' }}>
+          <h4 className="text-[9px] font-black uppercase tracking-widest mb-3.5 flex items-center gap-2" style={{ color: '#bbb' }}>
+            <span className="w-1 h-3.5 rounded-full bg-[#FFC107] inline-block" />
             Trip Summary
           </h4>
-          <div className="flex flex-col gap-1.5 text-[11px]">
-            <p><span className="font-semibold" style={{ color: '#888' }}>Pickup: </span><span style={{ color: '#121212' }}>{pickupAddress}</span></p>
-            {tripType !== 'rental' && <p><span className="font-semibold" style={{ color: '#888' }}>Drop: </span><span style={{ color: '#121212' }}>{dropAddress}</span></p>}
-            <p><span className="font-semibold" style={{ color: '#888' }}>Date & Time: </span><span style={{ color: '#121212' }}>{date} at {time}</span></p>
-            <p><span className="font-semibold" style={{ color: '#888' }}>Vehicle: </span><span style={{ color: '#121212' }}>{selectedVehicle.name}</span></p>
-            <p><span className="font-semibold" style={{ color: '#888' }}>Distance: </span><span style={{ color: '#121212' }}>{distanceKm} KM</span></p>
+          <div className="flex flex-col gap-2.5 text-[11px]">
+            <div className="flex gap-3">
+              <span className="font-black w-14 flex-shrink-0 text-[10px]" style={{ color: '#bbb' }}>Pickup</span>
+              <span className="font-semibold leading-snug" style={{ color: '#121212' }}>{pickupAddress}</span>
+            </div>
+            {tripType !== 'rental' && (
+              <div className="flex gap-3">
+                <span className="font-black w-14 flex-shrink-0 text-[10px]" style={{ color: '#bbb' }}>Drop</span>
+                <span className="font-semibold leading-snug" style={{ color: '#121212' }}>{dropAddress}</span>
+              </div>
+            )}
+            <div className="flex gap-3">
+              <span className="font-black w-14 flex-shrink-0 text-[10px]" style={{ color: '#bbb' }}>Date</span>
+              <span className="font-semibold" style={{ color: '#121212' }}>{date} at {time}</span>
+            </div>
+            <div className="flex gap-3">
+              <span className="font-black w-14 flex-shrink-0 text-[10px]" style={{ color: '#bbb' }}>Vehicle</span>
+              <span className="font-semibold" style={{ color: '#121212' }}>{selectedVehicle.name}</span>
+            </div>
+            <div className="flex gap-3">
+              <span className="font-black w-14 flex-shrink-0 text-[10px]" style={{ color: '#bbb' }}>Distance</span>
+              <span className="font-semibold" style={{ color: '#121212' }}>{distanceKm} KM</span>
+            </div>
           </div>
         </div>
 
         {/* Coupon */}
-        <div className="bg-white rounded-3xl p-4" style={{ border: '1px solid #F0F0F0' }}>
-          <label className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 mb-3" style={{ color: '#888' }}>
-            <Ticket className="w-4 h-4" style={{ color: '#FFC107' }} />
+        <div className="bg-white rounded-3xl p-5 shadow-xs" style={{ border: '1px solid #F0F0F0' }}>
+          <label className="text-[9px] font-black uppercase tracking-widest flex items-center gap-2 mb-3.5" style={{ color: '#bbb' }}>
+            <Ticket className="w-3.5 h-3.5" style={{ color: '#FFC107' }} />
             Coupon Code
           </label>
           <div className="flex gap-2">
@@ -220,81 +239,82 @@ export const Payment: React.FC = () => {
               placeholder="E.g. JOLLYNEW"
               value={couponInput}
               onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-              className="flex-1 px-3 py-2.5 rounded-xl text-xs font-semibold outline-none"
-              style={{ background: '#F5F5F5', border: '1.5px solid #EFEFEF', color: '#121212' }}
+              className="flex-1 px-4 py-3 rounded-2xl text-xs font-black outline-none tracking-widest"
+              style={{ background: '#F8F8F8', border: '1.5px solid #EFEFEF', color: '#121212' }}
             />
             <button
               onClick={handleApplyCoupon}
-              className="px-4 py-2 rounded-xl text-xs font-bold text-white"
-              style={{ background: '#121212' }}
+              className="px-5 py-2 rounded-2xl text-xs font-black uppercase tracking-wider transition-all active:scale-95"
+              style={{ background: '#121212', color: '#FFC107' }}
             >
               Apply
             </button>
           </div>
           {couponMessage && (
-            <p className={`text-[10px] font-bold mt-2 flex items-center gap-1 ${couponError ? 'text-red-500' : 'text-green-600'}`}>
+            <p className={`text-[10px] font-bold mt-2.5 flex items-center gap-1.5 ${couponError ? 'text-red-500' : 'text-emerald-600'}`}>
               <Percent className="w-3.5 h-3.5" /> {couponMessage}
             </p>
           )}
         </div>
 
         {/* Fare Breakdown */}
-        <div className="bg-white rounded-3xl p-5" style={{ border: '1px solid #F0F0F0' }}>
-          <h4 className="text-xs font-bold pb-3 border-b flex items-center justify-between mb-3" style={{ color: '#121212', borderColor: '#F5F5F5' }}>
-            <span>Fare Breakdown</span>
-            <span className="text-[10px] font-semibold" style={{ color: '#aaa' }}>All in INR</span>
+        <div className="bg-white rounded-3xl p-5 shadow-xs" style={{ border: '1px solid #F0F0F0' }}>
+          <h4 className="text-[9px] font-black uppercase tracking-widest flex items-center gap-2 mb-4" style={{ color: '#bbb' }}>
+            <span className="w-1 h-3.5 rounded-full bg-[#FFC107] inline-block" />
+            Fare Breakdown
+            <span className="ml-auto text-[8px] font-bold" style={{ color: '#ddd' }}>All in INR ₹</span>
           </h4>
-          <div className="flex flex-col gap-2 text-[11px] border-b pb-3" style={{ borderColor: '#F5F5F5' }}>
-            <div className="flex justify-between">
-              <span style={{ color: '#888' }}>Base fare</span>
-              <span className="font-semibold" style={{ color: '#121212' }}>₹{breakdown.base}</span>
+          <div className="flex flex-col gap-3 text-[11px] border-b pb-4" style={{ borderColor: '#F5F5F5' }}>
+            <div className="flex justify-between items-center">
+              <span style={{ color: '#999' }}>Base fare</span>
+              <span className="font-black" style={{ color: '#121212' }}>₹{breakdown.base}</span>
             </div>
             {breakdown.extraKm > 0 && (
-              <div className="flex justify-between">
-                <span style={{ color: '#888' }}>Extra distance</span>
-                <span className="font-semibold" style={{ color: '#121212' }}>₹{breakdown.extraKm}</span>
+              <div className="flex justify-between items-center">
+                <span style={{ color: '#999' }}>Extra distance</span>
+                <span className="font-black" style={{ color: '#121212' }}>₹{breakdown.extraKm}</span>
               </div>
             )}
             {breakdown.bata > 0 && (
-              <div className="flex justify-between">
-                <span style={{ color: '#888' }}>Driver bata ({days} days)</span>
-                <span className="font-semibold" style={{ color: '#121212' }}>₹{breakdown.bata}</span>
+              <div className="flex justify-between items-center">
+                <span style={{ color: '#999' }}>Driver bata ({days} days)</span>
+                <span className="font-black" style={{ color: '#121212' }}>₹{breakdown.bata}</span>
               </div>
             )}
             {breakdown.tolls > 0 && (
-              <div className="flex justify-between">
-                <span style={{ color: '#888' }}>Toll charges</span>
-                <span className="font-semibold" style={{ color: '#121212' }}>₹{breakdown.tolls}</span>
+              <div className="flex justify-between items-center">
+                <span style={{ color: '#999' }}>Toll charges</span>
+                <span className="font-black" style={{ color: '#121212' }}>₹{breakdown.tolls}</span>
               </div>
             )}
-            <div className="flex justify-between">
-              <span style={{ color: '#888' }}>Convenience fee</span>
-              <span className="font-semibold" style={{ color: '#121212' }}>₹{breakdown.convenience}</span>
+            <div className="flex justify-between items-center">
+              <span style={{ color: '#999' }}>Convenience fee</span>
+              <span className="font-black" style={{ color: '#121212' }}>₹{breakdown.convenience}</span>
             </div>
             {breakdown.discount > 0 && (
-              <div className="flex justify-between" style={{ color: '#4CAF50' }}>
-                <span>Coupon discount</span>
-                <span className="font-semibold">- ₹{breakdown.discount}</span>
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-emerald-600">Coupon discount</span>
+                <span className="font-black text-emerald-600">- ₹{breakdown.discount}</span>
               </div>
             )}
-            <div className="flex justify-between">
-              <span style={{ color: '#888' }}>GST (5%)</span>
-              <span className="font-semibold" style={{ color: '#121212' }}>₹{breakdown.gst}</span>
+            <div className="flex justify-between items-center">
+              <span style={{ color: '#999' }}>GST (5%)</span>
+              <span className="font-black" style={{ color: '#121212' }}>₹{breakdown.gst}</span>
             </div>
           </div>
-          <div className="flex justify-between items-center pt-3">
-            <span className="text-sm font-bold" style={{ color: '#121212' }}>Grand Total</span>
-            <span className="text-base font-black font-mono" style={{ color: '#121212' }}>₹{breakdown.total}</span>
+          <div className="flex justify-between items-center pt-4">
+            <span className="text-sm font-black" style={{ color: '#121212' }}>Grand Total</span>
+            <span className="text-2xl font-black font-mono" style={{ color: '#121212' }}>₹{breakdown.total}</span>
           </div>
           {isAdvanceRequired && (
-            <div className="mt-3 p-3.5 rounded-2xl" style={{ background: 'rgba(255,193,7,0.06)', border: '1px solid rgba(255,193,7,0.15)' }}>
-              <div className="flex justify-between text-xs font-bold" style={{ color: '#121212' }}>
+            <div className="mt-4 p-4 rounded-2xl flex flex-col gap-2.5" style={{ background: 'rgba(255,193,7,0.05)', border: '1px solid rgba(255,193,7,0.18)' }}>
+              <div className="flex justify-between text-xs font-black" style={{ color: '#121212' }}>
                 <span>Advance to pay now (20%)</span>
-                <span>₹{breakdown.advancePaid}</span>
+                <span className="font-mono">₹{breakdown.advancePaid}</span>
               </div>
-              <div className="flex justify-between text-[10px] font-semibold border-t pt-1.5 mt-1.5" style={{ color: '#888', borderColor: 'rgba(255,193,7,0.15)' }}>
+              <div className="flex justify-between text-[10px] font-semibold border-t pt-2.5" style={{ color: '#999', borderColor: 'rgba(255,193,7,0.15)' }}>
                 <span>Balance to pay driver after trip</span>
-                <span>₹{breakdown.remaining}</span>
+                <span className="font-mono">₹{breakdown.remaining}</span>
               </div>
             </div>
           )}
@@ -302,7 +322,7 @@ export const Payment: React.FC = () => {
 
         {/* Payment Method */}
         <div>
-          <h4 className="text-[10px] font-bold uppercase tracking-wider px-1 mb-3" style={{ color: '#888' }}>
+          <h4 className="text-[9px] font-black uppercase tracking-widest px-1 mb-3" style={{ color: '#bbb' }}>
             Payment Method
           </h4>
           <div className="grid grid-cols-2 gap-3">
@@ -312,22 +332,22 @@ export const Payment: React.FC = () => {
                 <button
                   key={id}
                   onClick={() => setPayMethod(id as PaymentMethod)}
-                  className="flex flex-col items-center justify-center p-3.5 rounded-2xl text-center gap-2 transition-all active:scale-[0.97]"
+                  className="flex flex-col items-center justify-center p-4 rounded-2xl text-center gap-2 transition-all active:scale-[0.97] shadow-xs"
                   style={{
                     background: selected ? '#121212' : '#fff',
                     border: selected ? '2px solid #FFC107' : '1.5px solid #EFEFEF'
                   }}
                 >
-                  <Icon className="w-5 h-5" style={{ color: selected ? '#FFC107' : '#aaa' }} />
-                  <span className="text-[10px] font-bold leading-tight" style={{ color: selected ? '#fff' : '#888' }}>{label}</span>
+                  <Icon className="w-5 h-5" style={{ color: selected ? '#FFC107' : '#ccc' }} />
+                  <span className="text-[10px] font-black leading-tight" style={{ color: selected ? '#fff' : '#999' }}>{label}</span>
                 </button>
               );
             })}
           </div>
-          <div className="mt-3 p-3 rounded-2xl flex items-center gap-2" style={{ background: 'rgba(255,193,7,0.05)', border: '1px solid rgba(255,193,7,0.15)' }}>
+          <div className="mt-3 p-3.5 rounded-2xl flex items-center gap-2.5" style={{ background: 'rgba(255,193,7,0.04)', border: '1px solid rgba(255,193,7,0.12)' }}>
             <Lock className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#FFC107' }} />
-            <p className="text-[9px] font-semibold" style={{ color: '#888' }}>
-              Online payments processed via <strong>Razorpay</strong>. Your data is 256-bit encrypted and secure.
+            <p className="text-[9px] font-semibold" style={{ color: '#bbb' }}>
+              Online payments processed via <strong style={{ color: '#888' }}>Razorpay</strong>. Your data is 256-bit encrypted.
             </p>
           </div>
         </div>
@@ -337,21 +357,21 @@ export const Payment: React.FC = () => {
       {/* Sticky CTA */}
       <div
         className="flex-shrink-0 bg-white px-5 py-4 flex items-center justify-between gap-4 safe-area-bottom"
-        style={{ border: '1px solid #F0F0F0' }}
+        style={{ borderTop: '1px solid #F0F0F0' }}
       >
         <div>
-          <span className="text-[10px] font-semibold uppercase block" style={{ color: '#888' }}>
+          <span className="text-[9px] font-black uppercase tracking-wider block" style={{ color: '#bbb' }}>
             {isAdvanceRequired ? 'Pay Now' : 'Total'}
           </span>
-          <span className="text-sm font-black font-mono" style={{ color: '#121212' }}>
+          <span className="text-xl font-black font-mono" style={{ color: '#121212' }}>
             ₹{isAdvanceRequired ? breakdown.advancePaid : breakdown.total}
           </span>
         </div>
         <button
           onClick={handleConfirmBooking}
           disabled={isSubmitting}
-          className="ripple-btn flex-1 py-4 rounded-2xl text-sm font-black flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-50"
-          style={{ background: '#FFC107', color: '#121212', fontFamily: 'Poppins, sans-serif' }}
+          className="ripple-btn flex-1 py-4 rounded-2xl text-sm font-black flex items-center justify-center gap-2 transition-all active:scale-[0.97] disabled:opacity-50 shadow-md"
+          style={{ background: '#FFC107', color: '#121212', fontFamily: 'Poppins, sans-serif', boxShadow: '0 4px 16px rgba(255,193,7,0.25)' }}
         >
           {isSubmitting ? (
             <div className="w-5 h-5 rounded-full border-2 border-black border-t-transparent animate-spin" />

@@ -20,12 +20,35 @@ export const Home: React.FC = () => {
   const { banners, vehicles, loadAllAdminData } = useAdminStore();
   const { toggleDrawer } = useUiStore();
   const [isLoading, setIsLoading] = useState(true);
+  const [recentBookings, setRecentBookings] = useState<any[]>([]);
 
   useEffect(() => {
     loadAllAdminData();
     const t = setTimeout(() => setIsLoading(false), 700);
     return () => clearTimeout(t);
   }, [loadAllAdminData]);
+
+  useEffect(() => {
+    try {
+      const local = localStorage.getItem('jolly_cabs_bookings');
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed)) {
+          setRecentBookings(parsed.slice(0, 2));
+        }
+      }
+    } catch (e) {}
+  }, []);
+
+  const handleRebook = (booking: any) => {
+    clearBookingForm();
+    setBookingField('tripType', booking.tripType);
+    setBookingField('pickupAddress', booking.pickupAddress);
+    setBookingField('dropAddress', booking.dropAddress);
+    setRoute(booking.pickupAddress, booking.dropAddress, booking.distanceKm, booking.durationMin, booking.fareBreakdown?.tollCharges || 0);
+    setBookingField('selectedVehicleId', booking.vehicleId);
+    navigate('/vehicles');
+  };
 
   const handleQuickBooking = (type: TripType) => {
     clearBookingForm();
@@ -71,55 +94,55 @@ export const Home: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="screen-body bg-[#F5F5F5]">
+      <div className="screen-body bg-[#F8F9FA]">
         {/* Skeleton Header */}
-        <div className="bg-[#FFC107] px-5 pt-6 pb-20">
+        <div className="bg-[#FFC107] px-5 pt-8 pb-20 rounded-b-[36px]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl shimmer-bg bg-black/10" />
+              <div className="w-11 h-11 rounded-2xl shimmer-bg bg-black/10" />
               <div className="flex flex-col gap-1.5">
-                <div className="w-16 h-2.5 shimmer-bg rounded bg-black/10" />
-                <div className="w-28 h-3.5 shimmer-bg rounded bg-black/10" />
+                <div className="w-16 h-3 shimmer-bg rounded bg-black/10" />
+                <div className="w-28 h-4.5 shimmer-bg rounded bg-black/10" />
               </div>
             </div>
             <div className="flex gap-2">
-              <div className="w-10 h-10 rounded-xl shimmer-bg bg-black/10" />
-              <div className="w-10 h-10 rounded-xl shimmer-bg bg-black/10" />
+              <div className="w-11 h-11 rounded-2xl shimmer-bg bg-black/10" />
+              <div className="w-11 h-11 rounded-2xl shimmer-bg bg-black/10" />
             </div>
           </div>
         </div>
-        <div className="px-5 -mt-12 flex flex-col gap-4">
-          <div className="bg-white rounded-3xl p-5 shadow-sm h-28 shimmer-bg" />
-          <div className="bg-white rounded-3xl p-5 shadow-sm h-48 shimmer-bg" />
+        <div className="px-5 -mt-12 flex flex-col gap-5">
+          <div className="bg-white rounded-3xl p-5 shadow-md h-32 shimmer-bg" />
+          <div className="bg-white rounded-3xl p-5 shadow-md h-56 shimmer-bg" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="screen-body bg-[#F5F5F5]">
+    <div className="screen-body bg-[#F8F9FA] scrollbar-none">
 
-      {/* ── Header ── */}
-      <div className="bg-[#FFC107] px-5 pt-6 pb-20 relative overflow-hidden flex-shrink-0">
+      {/* ── Header Section ── */}
+      <div className="bg-[#FFC107] px-5 pt-7 pb-20 relative overflow-hidden flex-shrink-0 rounded-b-[36px] shadow-md">
         <div className="absolute inset-0 pointer-events-none" style={{
-          background: 'radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.18) 0%, transparent 60%)'
+          background: 'radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.22) 0%, transparent 60%)'
         }} />
 
         <div className="flex items-center justify-between relative z-10">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3.5">
             <button
               onClick={toggleDrawer}
-              className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95"
-              style={{ background: 'rgba(18,18,18,0.12)', border: '1px solid rgba(18,18,18,0.1)' }}
+              className="w-11 h-11 rounded-2xl flex items-center justify-center transition-all active:scale-90 shadow-sm"
+              style={{ background: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.4)' }}
             >
-              <Menu className="w-5 h-5 stroke-[2.5]" style={{ color: '#121212' }} />
+              <Menu className="w-5.5 h-5.5 stroke-[2.5]" style={{ color: '#121212' }} />
             </button>
             <div>
-              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: 'rgba(18,18,18,0.6)' }}>
+              <span className="text-[9px] font-black uppercase tracking-widest block" style={{ color: 'rgba(18,18,18,0.5)' }}>
                 Jolly Cabs
               </span>
               <h2
-                className="text-base font-black truncate max-w-[160px]"
+                className="text-base font-black truncate max-w-[170px] mt-0.5"
                 style={{ color: '#121212', fontFamily: 'Poppins, sans-serif' }}
               >
                 Hello, {user?.name?.split(' ')[0] || 'Rider'} 👋
@@ -130,103 +153,97 @@ export const Home: React.FC = () => {
           <div className="flex gap-2">
             <button
               onClick={() => navigate('/notifications')}
-              className="w-10 h-10 rounded-xl flex items-center justify-center relative active:scale-95 transition-all"
-              style={{ background: 'rgba(18,18,18,0.12)', border: '1px solid rgba(18,18,18,0.1)' }}
+              className="w-11 h-11 rounded-2xl flex items-center justify-center relative active:scale-90 transition-all shadow-sm"
+              style={{ background: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.4)' }}
             >
               <Bell className="w-5 h-5 stroke-[2.5]" style={{ color: '#121212' }} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-600 rounded-full border border-[#FFC107]" />
+              <span className="absolute top-2 right-2 w-2 h-2 bg-red-600 rounded-full border border-[#FFC107]" />
             </button>
             <button
               onClick={() => navigate('/profile')}
-              className="w-10 h-10 rounded-xl flex items-center justify-center active:scale-95 transition-all"
-              style={{ background: 'rgba(18,18,18,0.12)', border: '1px solid rgba(18,18,18,0.1)' }}
+              className="w-11 h-11 rounded-2xl flex items-center justify-center active:scale-90 transition-all shadow-sm"
+              style={{ background: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.4)' }}
             >
               <User2 className="w-5 h-5 stroke-[2.5]" style={{ color: '#121212' }} />
             </button>
           </div>
         </div>
 
-        {/* Location */}
-        <div className="mt-4 flex items-center gap-1.5 relative z-10">
+        {/* Location Display */}
+        <div className="mt-5 flex items-center gap-2 relative z-10 bg-white/20 backdrop-blur-xs py-1.5 px-3 rounded-full w-fit max-w-[260px] border border-white/10 shadow-xs">
           <MapPin className="w-3.5 h-3.5 stroke-[2.5] flex-shrink-0" style={{ color: '#121212' }} />
-          <span className="text-[10px] font-bold truncate" style={{ color: 'rgba(18,18,18,0.75)' }}>
+          <span className="text-[10px] font-black truncate" style={{ color: '#121212' }}>
             Kukatpally, Hyderabad, Telangana
           </span>
         </div>
       </div>
 
-      {/* ── Body (overlaps yellow header) ── */}
-      <div className="px-4 -mt-12 flex flex-col gap-4 pb-6">
+      {/* ── Floating content stack ── */}
+      <div className="px-5 -mt-12 flex flex-col gap-6 pb-8">
 
-        {/* Active Ride Banner */}
+        {/* Active Ride Card */}
         {hasActiveRide && (
           <button
             onClick={() => navigate(`/track/${activeBooking!.id}`)}
-            className="w-full bg-[#121212] rounded-3xl p-4 flex items-center gap-3 shadow-xl active:scale-[0.98] transition-all"
-            style={{ border: '1px solid rgba(255,193,7,0.2)' }}
+            className="w-full bg-[#121212] rounded-3xl p-4.5 flex items-center gap-3.5 shadow-xl active:scale-[0.98] transition-all border border-brand-gold/20"
           >
-            <div
-              className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
-              style={{ background: '#FFC107' }}
-            >
-              <Navigation className="w-5 h-5 animate-pulse" style={{ color: '#121212' }} />
+            <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 bg-[#FFC107]">
+              <Navigation className="w-5.5 h-5.5 animate-pulse" style={{ color: '#121212' }} />
             </div>
             <div className="flex-1 text-left">
-              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.6)' }}>
-                Active Ride
+              <span className="text-[9px] font-bold uppercase tracking-widest text-brand-gold">
+                Ride In Progress
               </span>
-              <p className="text-xs font-bold mt-0.5" style={{ color: '#fff' }}>
+              <p className="text-xs font-black text-white mt-0.5">
                 {activeBooking!.status === 'pending' ? 'Finding driver...' :
                  activeBooking!.status === 'accepted' ? `${activeBooking!.driverName} assigned` :
                  activeBooking!.status === 'driver_reached' ? 'Driver arrived!' :
                  activeBooking!.status === 'trip_started' ? 'Ride in progress' : 'Track your ride'}
               </p>
             </div>
-            <div className="px-3 py-1 rounded-xl" style={{ background: '#FFC107' }}>
-              <span className="text-[10px] font-black" style={{ color: '#121212' }}>Track →</span>
+            <div className="px-3.5 py-1.5 rounded-xl bg-[#FFC107] text-[#121212] hover:bg-brand-lightGold transition-colors text-[10px] font-black uppercase tracking-wider">
+              Track
             </div>
           </button>
         )}
 
-        {/* Search / Book Card */}
-        <div className="bg-white rounded-3xl p-5 shadow-sm" style={{ border: '1px solid #F0F0F0' }}>
-          <h4 className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: '#888' }}>
+        {/* Premium Booking Card (floating) */}
+        <div className="bg-white rounded-3xl p-5.5 shadow-md border border-[#F0F0F0]">
+          <h4 className="text-[10px] font-bold uppercase tracking-wider mb-3.5 text-gray-400">
             Where can we take you?
           </h4>
-          <div className="flex flex-col gap-2.5 relative">
-            <div className="absolute left-[22px] top-7 bottom-7 border-l-2 border-dashed" style={{ borderColor: 'rgba(255,193,7,0.4)' }} />
+          <div className="flex flex-col gap-3 relative">
+            <div className="absolute left-[20px] top-[30px] bottom-[30px] border-l-2 border-dashed border-gray-100" />
 
             <button
               onClick={() => navigate('/booking')}
-              className="flex items-center gap-3 rounded-2xl px-4 py-3 active:scale-[0.98] transition-all relative z-10"
-              style={{ background: '#F8F8F8', border: '1.5px solid #EFEFEF' }}
+              className="flex items-center gap-3.5 rounded-2xl px-4 py-3.5 active:scale-[0.99] transition-all text-left bg-gray-50/50 hover:bg-gray-50 border border-gray-100"
             >
-              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: '#FFC107', border: '2px solid #fff', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }} />
-              <div className="flex-1 min-w-0 text-left">
-                <span className="text-[8px] font-bold uppercase tracking-wide block" style={{ color: '#aaa' }}>Pickup</span>
-                <span className="text-xs font-bold truncate block mt-0.5" style={{ color: '#888' }}>Enter pickup location...</span>
+              <div className="w-3.5 h-3.5 rounded-full flex-shrink-0 bg-[#FFC107] border-2 border-white shadow-md shadow-[#FFC107]/20" />
+              <div className="flex-1 min-w-0">
+                <span className="text-[8px] font-bold uppercase tracking-widest text-gray-400 block">Pickup</span>
+                <span className="text-[11.5px] font-bold text-gray-600 block mt-0.5">Enter pickup location...</span>
               </div>
             </button>
 
             <button
               onClick={() => navigate('/booking')}
-              className="flex items-center gap-3 rounded-2xl px-4 py-3 active:scale-[0.98] transition-all relative z-10"
-              style={{ background: '#F8F8F8', border: '1.5px solid #EFEFEF' }}
+              className="flex items-center gap-3.5 rounded-2xl px-4 py-3.5 active:scale-[0.99] transition-all text-left bg-gray-50/50 hover:bg-gray-50 border border-gray-100"
             >
-              <div className="w-3 h-3 rounded flex-shrink-0" style={{ background: '#F44336', border: '2px solid #fff', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }} />
-              <div className="flex-1 min-w-0 text-left">
-                <span className="text-[8px] font-bold uppercase tracking-wide block" style={{ color: '#aaa' }}>Drop</span>
-                <span className="text-xs font-bold truncate block mt-0.5" style={{ color: '#888' }}>Where are you going?</span>
+              <div className="w-3.5 h-3.5 rounded-lg flex-shrink-0 bg-red-500 border-2 border-white shadow-md shadow-red-500/20" />
+              <div className="flex-1 min-w-0">
+                <span className="text-[8px] font-bold uppercase tracking-widest text-gray-400 block">Drop</span>
+                <span className="text-[11.5px] font-bold text-gray-600 block mt-0.5">Where are you going?</span>
               </div>
             </button>
           </div>
         </div>
 
-        {/* Quick Book Services */}
-        <div className="bg-white rounded-3xl p-5 shadow-sm" style={{ border: '1px solid #F0F0F0' }}>
-          <h4 className="text-[10px] font-bold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: '#888' }}>
-            <Compass className="w-3.5 h-3.5" style={{ color: '#FFC107' }} />
-            Quick Book
+        {/* Quick Booking Options Grid */}
+        <div className="bg-white rounded-3xl p-5 shadow-md border border-[#F0F0F0]">
+          <h4 className="text-[10px] font-bold uppercase tracking-wider mb-4 flex items-center gap-2 text-gray-400">
+            <Compass className="w-4 h-4 text-[#FFC107]" />
+            Quick Booking Services
           </h4>
           <div className="grid grid-cols-3 gap-3">
             {[
@@ -242,31 +259,170 @@ export const Home: React.FC = () => {
                 <button
                   key={cat.id}
                   onClick={() => handleQuickBooking(cat.id as TripType)}
-                  className="flex flex-col items-center justify-center p-3 rounded-2xl text-center transition-all active:scale-95 gap-1.5"
-                  style={{ background: '#F8F8F8', border: '1.5px solid #EFEFEF' }}
+                  className="flex flex-col items-center justify-center p-3.5 rounded-2xl text-center transition-all active:scale-95 gap-2 border border-gray-50 bg-[#F9FBFD] hover:bg-white hover:border-[#FFC107]/20"
                 >
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'rgba(255,193,7,0.12)' }}>
-                    <Icon className="w-4 h-4" style={{ color: '#FFC107' }} />
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#FFC107]/10">
+                    <Icon className="w-4.5 h-4.5 text-[#FFC107]" />
                   </div>
-                  <span className="text-[10px] font-bold leading-tight" style={{ color: '#121212' }}>{cat.label}</span>
+                  <span className="text-[10.5px] font-bold leading-tight text-[#121212]">{cat.label}</span>
                 </button>
               );
             })}
           </div>
           <button
             onClick={() => handleQuickBooking('local')}
-            className="ripple-btn w-full py-3.5 rounded-2xl mt-4 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-wider transition-all active:scale-[0.98]"
+            className="ripple-btn w-full py-4 rounded-2xl mt-4 flex items-center justify-center gap-2.5 font-black text-xs uppercase tracking-wider transition-all active:scale-[0.98] shadow-md shadow-[#FFC107]/15"
             style={{ background: '#FFC107', color: '#121212', fontFamily: 'Poppins, sans-serif' }}
           >
-            Book Custom Ride <ArrowRight className="w-3.5 h-3.5 stroke-[3]" />
+            Custom Booking Flow <ArrowRight className="w-4 h-4 stroke-[3]" />
           </button>
         </div>
 
+        {/* Airport Services Highlight */}
+        <div className="bg-white rounded-3xl p-5.5 shadow-md border border-[#F0F0F0] flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl flex items-center justify-center bg-sky-50 border border-sky-100 flex-shrink-0">
+              <Plane className="w-5.5 h-5.5 text-sky-500" />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-brand-textDark">Airport Services</h4>
+              <p className="text-[9.5px] text-gray-500 mt-0.5 leading-relaxed">
+                Flat rates starting at just ₹899. Free 60 mins waiting time.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => handleQuickBooking('airport_drop')}
+            className="bg-[#121212] text-white hover:bg-black font-black text-[9px] uppercase tracking-wider px-3.5 py-2.5 rounded-xl flex-shrink-0 transition-colors shadow-sm"
+          >
+            Airport
+          </button>
+        </div>
+
+        {/* Travel Packages / Banners */}
+        {banners.filter(b => b.active).length > 0 && (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between px-1 mb-0.5">
+              <h4 className="text-xs font-black uppercase tracking-wider flex items-center gap-2 text-brand-textDark font-display">
+                <span className="w-1.5 h-4.5 rounded-full bg-[#FFC107]" />
+                Travel Packages
+              </h4>
+              <span className="text-[9px] font-black text-brand-gold uppercase tracking-wider">Promo active</span>
+            </div>
+            {banners.filter(b => b.active).map((banner) => (
+              <button
+                key={banner.id}
+                onClick={() => handleBannerClick(banner.id)}
+                className="w-full text-left rounded-3xl p-5 relative overflow-hidden active:scale-[0.98] transition-all shadow-md bg-gradient-to-br from-brand-dark to-stone-900 border border-brand-gold/15"
+              >
+                <div className="absolute right-2 -bottom-5 opacity-8 pointer-events-none">
+                  <Gift className="w-28 h-28 text-brand-gold" />
+                </div>
+                <span className="inline-block px-2.5 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-widest mb-2 bg-[#FFC107]/10 text-brand-gold border border-brand-gold/20">
+                  {banner.festivalName}
+                </span>
+                <h4 className="text-sm font-bold leading-snug max-w-[85%] text-white font-display">
+                  {banner.title}
+                </h4>
+                <p className="text-[10px] mt-1 max-w-[90%] text-gray-400">{banner.subtitle}</p>
+                <div className="mt-4 flex items-center gap-3 border-t border-white/5 pt-3">
+                  <span className="text-[9px] font-bold text-gray-400">Coupon:</span>
+                  <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-bold font-mono tracking-wider bg-white/5 border border-white/10 text-brand-gold">
+                    {banner.couponCode}
+                  </span>
+                  <span className="ml-auto text-[9px] font-black px-3 py-1 bg-[#FFC107] text-[#121212] rounded-xl shadow-sm">
+                    Book Now →
+                  </span>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Recent Bookings */}
+        {recentBookings.length > 0 && (
+          <div className="flex flex-col gap-3">
+            <h4 className="text-xs font-black uppercase tracking-wider flex items-center gap-2 text-brand-textDark font-display px-1">
+              <span className="w-1.5 h-4.5 rounded-full bg-[#FFC107]" />
+              Recent Bookings
+            </h4>
+            <div className="flex flex-col gap-2.5">
+              {recentBookings.map((bk) => (
+                <div
+                  key={bk.id}
+                  className="bg-white p-4 rounded-3xl border border-[#F0F0F0] shadow-sm flex items-center justify-between gap-3"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="px-1.5 py-0.5 bg-gray-50 border border-gray-100 rounded text-[8px] font-black text-gray-500 uppercase">
+                        {bk.tripType.replace('_', ' ')}
+                      </span>
+                      <span className="text-[9px] text-gray-400 font-medium">
+                        {bk.date}
+                      </span>
+                    </div>
+                    <h5 className="text-[11px] font-bold text-brand-textDark truncate mt-1">
+                      {bk.pickupAddress.split(',')[0]} → {bk.dropAddress.split(',')[0] || 'Rental'}
+                    </h5>
+                    <p className="text-[9.5px] text-gray-400 mt-0.5">
+                      {bk.vehicleDetails?.name || 'Cab Ride'} · ₹{bk.actualFare || bk.estimatedFareMin}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleRebook(bk)}
+                    className="border border-brand-gold/40 hover:bg-brand-gold/5 text-brand-gold text-[9px] font-black uppercase tracking-wider px-3 py-2 rounded-xl transition-all"
+                  >
+                    Rebook
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recommended Vehicles / Fleet Slider */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between px-1">
+            <h4 className="text-xs font-black uppercase tracking-wider flex items-center gap-2 text-brand-textDark font-display">
+              <span className="w-1.5 h-4.5 rounded-full bg-[#FFC107]" />
+              Recommended Cabs
+            </h4>
+            <span className="text-[9px] font-bold text-brand-textGray">Swipe →</span>
+          </div>
+          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
+            {vehicles.map((v) => (
+              <div
+                key={v.id}
+                className="bg-white rounded-3xl p-4 min-w-[200px] w-[200px] snap-center flex-shrink-0 flex flex-col justify-between border border-[#F0F0F0] shadow-sm hover:border-brand-gold/25 transition-all"
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="px-2 py-0.5 rounded-full text-[8px] font-bold bg-gray-50 border border-gray-100 text-gray-500 uppercase">{v.category}</span>
+                    <span className="text-xs font-bold text-[#FFC107]">★ 4.9</span>
+                  </div>
+                  {/* transparent vehicle floating over white background */}
+                  <div className="h-20 w-full rounded-2xl flex items-center justify-center my-3 overflow-hidden bg-gray-50/50 border border-gray-50 p-1">
+                    <img src={getAssetUrl(v.image)} alt={v.name} className="h-full w-full object-contain filter drop-shadow-md" />
+                  </div>
+                  <h5 className="text-xs font-bold text-brand-textDark truncate">{v.name}</h5>
+                  <p className="text-[10px] mt-1 text-gray-500 font-semibold">₹{v.pricing.pricePerKm}/KM · Min billing {v.pricing.minDistance}KM</p>
+                </div>
+                <button
+                  onClick={() => handleQuickBooking('local')}
+                  className="w-full py-2.5 rounded-2xl mt-3 text-[10px] font-black uppercase tracking-wider active:scale-95 transition-all bg-[#FFC107] text-[#121212] shadow-sm"
+                >
+                  Book Cabs
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Why Choose Jolly Cabs */}
-        <div>
-          <h4 className="text-xs font-black uppercase tracking-wider mb-3 flex items-center gap-2 px-1" style={{ color: '#121212', fontFamily: 'Poppins, sans-serif' }}>
-            <span className="w-1 h-4 rounded-full" style={{ background: '#FFC107' }} />
-            Why Jolly Cabs?
+        <div className="flex flex-col gap-3">
+          <h4 className="text-xs font-black uppercase tracking-wider flex items-center gap-2 text-brand-textDark font-display px-1">
+            <span className="w-1.5 h-4.5 rounded-full bg-[#FFC107]" />
+            Why Choose Us?
           </h4>
           <div className="grid grid-cols-2 gap-3">
             {[
@@ -279,71 +435,29 @@ export const Home: React.FC = () => {
               return (
                 <div
                   key={i}
-                  className="bg-white p-4 rounded-2xl flex flex-col gap-1.5"
-                  style={{ borderLeft: '4px solid #FFC107', border: '1px solid #F0F0F0', borderLeftWidth: '4px', borderLeftColor: '#FFC107' }}
+                  className="bg-white p-4 rounded-3xl flex flex-col gap-2 border border-[#F0F0F0] shadow-xs"
                 >
-                  <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: '#FFC107' }}>
-                    <Icon className="w-4 h-4" style={{ color: '#121212' }} />
+                  <div className="w-8.5 h-8.5 rounded-xl flex items-center justify-center bg-[#FFC107]/10 text-[#FFC107]">
+                    <Icon className="w-4.5 h-4.5 stroke-[2.5]" />
                   </div>
-                  <h5 className="text-[11px] font-bold" style={{ color: '#121212' }}>{item.title}</h5>
-                  <p className="text-[9.5px] leading-relaxed" style={{ color: '#888' }}>{item.desc}</p>
+                  <div>
+                    <h5 className="text-[11px] font-bold text-brand-textDark">{item.title}</h5>
+                    <p className="text-[9.5px] leading-relaxed text-gray-400 mt-0.5">{item.desc}</p>
+                  </div>
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Special Packages */}
-        {banners.filter(b => b.active).length > 0 && (
-          <div>
-            <div className="flex items-center justify-between px-1 mb-3">
-              <h4 className="text-xs font-black uppercase tracking-wider flex items-center gap-2" style={{ color: '#121212', fontFamily: 'Poppins, sans-serif' }}>
-                <span className="w-1 h-4 rounded-full" style={{ background: '#FFC107' }} />
-                Special Packages
-              </h4>
-              <span className="text-[10px] font-black px-2.5 py-1 rounded-lg" style={{ background: '#FFC107', color: '#121212' }}>Tap to Book</span>
-            </div>
-            <div className="flex flex-col gap-3">
-              {banners.filter(b => b.active).map((banner) => (
-                <button
-                  key={banner.id}
-                  onClick={() => handleBannerClick(banner.id)}
-                  className="w-full text-left rounded-3xl p-5 relative overflow-hidden active:scale-[0.98] transition-all"
-                  style={{ background: '#121212', border: '1px solid rgba(255,193,7,0.15)' }}
-                >
-                  <div className="absolute right-3 -bottom-4 opacity-10 pointer-events-none">
-                    <Gift className="w-28 h-28" style={{ color: '#FFC107' }} />
-                  </div>
-                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide mb-2" style={{ background: 'rgba(255,193,7,0.1)', color: '#FFC107', border: '1px solid rgba(255,193,7,0.25)' }}>
-                    {banner.festivalName}
-                  </span>
-                  <h4 className="text-base font-bold leading-snug max-w-[85%]" style={{ color: '#fff', fontFamily: 'Poppins, sans-serif' }}>
-                    {banner.title}
-                  </h4>
-                  <p className="text-[11px] mt-1 max-w-[90%]" style={{ color: '#888' }}>{banner.subtitle}</p>
-                  <div className="mt-4 flex items-center gap-3">
-                    <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Code:</span>
-                    <span className="px-3 py-1 rounded-xl text-xs font-bold font-mono tracking-wider" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#FFC107' }}>
-                      {banner.couponCode}
-                    </span>
-                    <span className="ml-auto text-[10px] font-bold px-2.5 py-1 rounded-xl" style={{ background: 'rgba(255,193,7,0.1)', color: '#FFC107', border: '1px solid rgba(255,193,7,0.2)' }}>
-                      Book →
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Popular Routes */}
-        <div>
-          <div className="flex items-center justify-between mb-3 px-1">
-            <h4 className="text-xs font-black uppercase tracking-wider flex items-center gap-2" style={{ color: '#121212', fontFamily: 'Poppins, sans-serif' }}>
-              <span className="w-1 h-4 rounded-full" style={{ background: '#FFC107' }} />
-              Popular Routes
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between px-1">
+            <h4 className="text-xs font-black uppercase tracking-wider flex items-center gap-2 text-brand-textDark font-display">
+              <span className="w-1.5 h-4.5 rounded-full bg-[#FFC107]" />
+              Popular Destinations
             </h4>
-            <span className="text-[10px] font-black px-2.5 py-1 rounded-lg" style={{ background: '#FFC107', color: '#121212' }}>Best Prices</span>
+            <span className="text-[9px] font-black text-brand-gold uppercase tracking-wider">Best Prices</span>
           </div>
           <div className="flex flex-col gap-2.5">
             {MOCK_ROUTES.filter(r => ['route_airport_drop', 'route_srisailam', 'route_tirupati', 'route_vijayawada'].includes(r.id)).map((route) => {
@@ -357,22 +471,21 @@ export const Home: React.FC = () => {
                 <button
                   key={route.id}
                   onClick={() => handlePopularRouteClick(route)}
-                  className="w-full bg-white p-3 rounded-2xl flex items-center justify-between text-left active:scale-[0.98] transition-all"
-                  style={{ border: '1px solid #F0F0F0' }}
+                  className="w-full bg-white p-3 rounded-2xl flex items-center justify-between text-left active:scale-[0.99] transition-all border border-[#F0F0F0] shadow-sm hover:border-brand-gold/15"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-10 rounded-xl overflow-hidden flex-shrink-0" style={{ border: '1px solid #F0F0F0' }}>
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-13 h-10.5 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100 bg-gray-50">
                       <img src={getAssetUrl(getRouteImage(route.id))} alt={route.name} className="w-full h-full object-cover" />
                     </div>
                     <div>
-                      <h5 className="text-[11px] font-bold truncate max-w-[170px]" style={{ color: '#121212' }}>{route.name}</h5>
-                      <p className="text-[9.5px] mt-0.5" style={{ color: '#888' }}>
+                      <h5 className="text-[11px] font-bold text-brand-textDark truncate max-w-[170px]">{route.name}</h5>
+                      <p className="text-[9.5px] mt-0.5 text-gray-400">
                         {route.distanceKm} KM · {route.durationMin} mins
                       </p>
                     </div>
                   </div>
-                  <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: '#F5F5F5' }}>
-                    <ArrowRight className="w-3 h-3" style={{ color: '#888' }} />
+                  <div className="w-7 h-7 rounded-xl flex items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <ArrowRight className="w-3.5 h-3.5 text-gray-500" />
                   </div>
                 </button>
               );
@@ -380,88 +493,57 @@ export const Home: React.FC = () => {
           </div>
         </div>
 
-        {/* Premium Fleet */}
-        <div>
-          <div className="flex items-center justify-between mb-3 px-1">
-            <h4 className="text-xs font-black uppercase tracking-wider flex items-center gap-2" style={{ color: '#121212', fontFamily: 'Poppins, sans-serif' }}>
-              <span className="w-1 h-4 rounded-full" style={{ background: '#FFC107' }} />
-              Our Fleet
-            </h4>
-            <span className="text-[10px] font-bold" style={{ color: '#FFC107' }}>Swipe →</span>
-          </div>
-          <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
-            {vehicles.map((v) => (
-              <div
-                key={v.id}
-                className="bg-white rounded-2xl p-4 min-w-[190px] w-[190px] snap-center flex-shrink-0 flex flex-col justify-between"
-                style={{ border: '1px solid #F0F0F0' }}
-              >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold" style={{ background: '#F5F5F5', color: '#888' }}>{v.category}</span>
-                    <span className="text-xs font-bold" style={{ color: '#FFC107' }}>★ 4.9</span>
-                  </div>
-                  <div className="h-20 w-full rounded-xl flex items-center justify-center my-3 overflow-hidden" style={{ background: '#FAFAFA', border: '1px solid #F0F0F0' }}>
-                    <img src={getAssetUrl(v.image)} alt={v.name} className="h-full w-full object-contain" />
-                  </div>
-                  <h5 className="text-xs font-bold truncate" style={{ color: '#121212' }}>{v.name}</h5>
-                  <p className="text-[10px] mt-1" style={{ color: '#888' }}>₹{v.pricing.pricePerKm}/KM</p>
-                </div>
-                <button
-                  onClick={() => handleQuickBooking('local')}
-                  className="w-full py-2 rounded-xl mt-3 text-[10px] font-black uppercase tracking-wider active:scale-95 transition-all"
-                  style={{ background: '#FFC107', color: '#121212' }}
-                >
-                  Book Now
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* SOS Card */}
-        <div className="rounded-3xl p-5 flex items-center justify-between gap-4" style={{ background: 'rgba(244,67,54,0.05)', border: '1px solid rgba(244,67,54,0.15)' }}>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(244,67,54,0.1)', border: '1px solid rgba(244,67,54,0.2)' }}>
-              <ShieldAlert className="w-5 h-5 animate-pulse" style={{ color: '#F44336' }} />
-            </div>
-            <div>
-              <h5 className="text-xs font-bold uppercase" style={{ color: '#D32F2F' }}>Emergency Help</h5>
-              <p className="text-[9.5px] mt-0.5 max-w-[160px]" style={{ color: '#888' }}>Need immediate safety help? Dial emergency.</p>
-            </div>
-          </div>
-          <button
-            onClick={() => window.open('tel:7981232371')}
-            className="px-4 py-2.5 rounded-xl text-[10px] font-bold text-white transition-colors active:scale-95"
-            style={{ background: '#F44336' }}
-          >
-            SOS
-          </button>
-        </div>
-
-        {/* Reviews */}
-        <div>
-          <h4 className="text-xs font-black uppercase tracking-wider mb-3 px-1 flex items-center gap-2" style={{ color: '#121212', fontFamily: 'Poppins, sans-serif' }}>
-            <span className="w-1 h-4 rounded-full" style={{ background: '#FFC107' }} />
-            Customer Reviews
+        {/* Customer Reviews */}
+        <div className="flex flex-col gap-3">
+          <h4 className="text-xs font-black uppercase tracking-wider flex items-center gap-2 text-brand-textDark font-display px-1">
+            <span className="w-1.5 h-4.5 rounded-full bg-[#FFC107]" />
+            What Riders Say
           </h4>
           <div className="flex flex-col gap-2.5">
             {MOCK_REVIEWS.map((rev) => (
-              <div key={rev.id} className="bg-white rounded-2xl p-4 flex flex-col gap-1.5" style={{ border: '1px solid #F0F0F0', borderLeft: '4px solid #FFC107' }}>
+              <div key={rev.id} className="bg-white rounded-3xl p-4 flex flex-col gap-2 border border-[#F0F0F0] shadow-sm" style={{ borderLeft: '4.5px solid #FFC107' }}>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold" style={{ color: '#121212' }}>{rev.customerName}</span>
+                  <span className="text-xs font-bold text-brand-textDark">{rev.customerName}</span>
                   <div className="flex items-center gap-0.5">
                     {[...Array(rev.rating)].map((_, i) => (
-                      <Star key={i} className="w-3 h-3 fill-[#FFC107] text-[#FFC107]" />
+                      <Star key={i} className="w-3.5 h-3.5 fill-[#FFC107] text-[#FFC107]" />
                     ))}
                   </div>
                 </div>
-                <p className="text-[11px] leading-relaxed italic" style={{ color: '#888' }}>"{rev.comment}"</p>
-                <span className="self-end text-[9px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider" style={{ background: 'rgba(255,193,7,0.15)', color: '#121212' }}>
+                <p className="text-[11px] leading-relaxed italic text-gray-500">"{rev.comment}"</p>
+                <span className="self-end text-[8.5px] font-black px-2 py-0.5 rounded bg-gray-50 border border-gray-100 text-gray-400 uppercase tracking-widest">
                   {rev.category}
                 </span>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Customer Support & SOS */}
+        <div className="flex flex-col gap-3">
+          <h4 className="text-xs font-black uppercase tracking-wider flex items-center gap-2 text-brand-textDark font-display px-1">
+            <span className="w-1.5 h-4.5 rounded-full bg-red-500 animate-pulse" />
+            Customer Support & Safety
+          </h4>
+          
+          <div className="rounded-3xl p-4.5 flex items-center justify-between gap-4 bg-red-500/5 border border-red-500/15 shadow-sm">
+            <div className="flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl flex items-center justify-center bg-red-500/10 border border-red-500/20 flex-shrink-0">
+                <ShieldAlert className="w-5.5 h-5.5 text-red-500 animate-pulse" />
+              </div>
+              <div>
+                <h5 className="text-xs font-bold text-red-700 uppercase tracking-wide">SOS Safety Button</h5>
+                <p className="text-[9.5px] text-gray-400 mt-0.5 max-w-[170px] leading-normal">
+                  In case of emergency, contact safety desk.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => window.open('tel:7981232371')}
+              className="px-4 py-2.5 rounded-xl text-[10px] font-black text-white bg-red-500 hover:bg-red-600 transition-colors active:scale-95 shadow-sm uppercase tracking-wider"
+            >
+              SOS Call
+            </button>
           </div>
         </div>
 
