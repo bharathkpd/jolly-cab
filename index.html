@@ -2,17 +2,51 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/jolly-cab/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Full-screen native mobile app viewport — no scaling, no zoom -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="referrer" content="no-referrer" />
-    <meta name="description" content="Book reliable and affordable cab service in Hyderabad with Jolly Cabs. Airport transfers, outstation tours, day rentals and wedding cabs with verified drivers." />
-    <meta name="keywords" content="cab service Hyderabad, taxi Hyderabad, airport cab Hyderabad, outstation cab Hyderabad, Jolly Cabs, Kukatpally cab, car rental Hyderabad" />
-    <title>Jolly Cabs | Hyderabad's Premium Taxi & Cab Services</title>
+    <meta name="description" content="Jolly Cabs — Book reliable premium cab service in Hyderabad. Airport transfers, outstation tours, day rentals with verified drivers." />
+    <meta name="keywords" content="cab service Hyderabad, taxi Hyderabad, airport cab Hyderabad, outstation cab Hyderabad, Jolly Cabs" />
+    
+    <!-- PWA / Android TWA meta tags -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Jolly Cabs" />
+    <meta name="theme-color" content="#FFC107" />
+    <meta name="application-name" content="Jolly Cabs" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Jolly Cabs | Premium Cab Service" />
+    <meta property="og:description" content="Book reliable and affordable cab service in Hyderabad." />
+    <meta property="og:type" content="website" />
+    
+    <title>Jolly Cabs</title>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <!-- Inline critical CSS to prevent FOUC / white flash -->
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body, #root {
+        width: 100%;
+        height: 100%;
+        height: 100dvh;
+        overflow: hidden;
+        background: #FFC107;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-touch-callout: none;
+        user-select: none;
+        overscroll-behavior: none;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

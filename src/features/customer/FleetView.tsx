@@ -4,6 +4,7 @@ import { ArrowLeft, Menu, User, Briefcase, Flame, Check, Route, HeartHandshake }
 import { useUiStore } from '../../store/uiStore';
 import { useBookingStore } from '../../store/bookingStore';
 import { useAdminStore } from '../../store/adminStore';
+import { getAssetUrl } from '../../utils/assets';
 
 export const FleetView: React.FC = () => {
   const navigate = useNavigate();
@@ -72,7 +73,7 @@ export const FleetView: React.FC = () => {
               <div className="flex items-center gap-4">
                 <div className="w-28 h-18 bg-white rounded-2xl flex items-center justify-center p-1 flex-shrink-0 overflow-hidden border border-brand-borderLight shadow-sm">
                   <img 
-                    src={v.image} 
+                    src={getAssetUrl(v.image)} 
                     alt={v.name} 
                     className="h-full w-full object-contain hover:scale-105 transition-transform duration-300"
                   />

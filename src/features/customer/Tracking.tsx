@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Phone, Shield, Navigation, Star, FileText } from 'lucide-react';
+import { Phone, Shield, Star, ArrowLeft, Car, MapPin, Clock } from 'lucide-react';
 import { useBookingStore } from '../../store/bookingStore';
 import { MapComponent } from '../../components/MapComponent';
 import { fetchMapRoute } from '../../services/mapsService';
@@ -11,204 +11,142 @@ export const Tracking: React.FC = () => {
   const navigate = useNavigate();
   const { activeBooking, cancelBooking, addReviewToHistory } = useBookingStore();
 
-  const [progress, setProgress] = useState(0); // 0 to 100 for car position
+  const [progress, setProgress] = useState(0);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
-  const [reviewSubmitted, setReviewSubmitted] = useState(false);
-
   const [pickupCoords, setPickupCoords] = useState<[number, number] | null>(null);
   const [dropCoords, setDropCoords] = useState<[number, number] | null>(null);
   const [routeCoords, setRouteCoords] = useState<[number, number][]>([]);
   const [carCoords, setCarCoords] = useState<[number, number] | null>(null);
-  const [isLoadingMapData, setIsLoadingMapData] = useState(false);
 
-  // Retrieve current tracking details
   const booking = activeBooking?.id === bookingId ? activeBooking : null;
 
-  // Car map animation during "trip_started"
+  // Simulate car movement
   useEffect(() => {
-    if (!booking || booking.status !== 'trip_started') {
-      setProgress(0);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return prev + 5; // increase progress gradually
-      });
+    if (!booking || booking.status !== 'trip_started') { setProgress(0); return; }
+    const iv = setInterval(() => {
+      setProgress(prev => prev >= 100 ? 100 : prev + 4);
     }, 800);
-
-    return () => clearInterval(interval);
+    return () => clearInterval(iv);
   }, [booking?.status]);
 
-  // Geocode pickup & drop addresses on mount / booking change
+  // Resolve coords
   useEffect(() => {
     if (!booking) return;
-
-    const resolveAddresses = async () => {
-      setIsLoadingMapData(true);
-      let pCoords: [number, number] = [17.4849, 78.3884]; // Fallback Kukatpally
-      let dCoords: [number, number] = [17.2403, 78.4294]; // Fallback Airport
-
-      // Address coordinates lookup
-      const getCoords = async (address: string): Promise<[number, number] | null> => {
-        // Quick fallbacks for popular locations to make loading instant
-        const query = address.toLowerCase();
-        if (query.includes('kukatpally')) return [17.4849, 78.3884];
-        if (query.includes('gachibowli')) return [17.4401, 78.3489];
-        if (query.includes('secunderabad')) return [17.4344, 78.5011];
-        if (query.includes('airport') || query.includes('rgia')) return [17.2403, 78.4294];
-        if (query.includes('srisailam')) return [16.0734, 78.8681];
-        if (query.includes('tirupati')) return [13.6833, 79.3475];
-        if (query.includes('vijayawada')) return [16.5062, 80.6480];
-
-        try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data[0]) {
-              return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-            }
-          }
-        } catch (e) {
-          console.warn('Geocoding error in tracking, using defaults.');
-        }
-        return null;
-      };
-
-      const resolvedPickup = await getCoords(booking.pickupAddress);
-      if (resolvedPickup) pCoords = resolvedPickup;
-
-      if (booking.tripType !== 'rental') {
-        const resolvedDrop = await getCoords(booking.dropAddress);
-        if (resolvedDrop) dCoords = resolvedDrop;
-      }
-
-      setPickupCoords(pCoords);
-      if (booking.tripType !== 'rental') {
-        setDropCoords(dCoords);
-      } else {
-        setDropCoords(null);
-      }
-      setIsLoadingMapData(false);
+    const getCoords = (addr: string): [number, number] | null => {
+      const q = addr.toLowerCase();
+      if (q.includes('kukatpally')) return [17.4849, 78.3884];
+      if (q.includes('gachibowli')) return [17.4401, 78.3489];
+      if (q.includes('secunderabad')) return [17.4344, 78.5011];
+      if (q.includes('airport') || q.includes('rgia')) return [17.2403, 78.4294];
+      if (q.includes('srisailam')) return [16.0734, 78.8681];
+      if (q.includes('tirupati')) return [13.6833, 79.3475];
+      if (q.includes('vijayawada')) return [16.5062, 80.6480];
+      if (q.includes('charminar')) return [17.3616, 78.4747];
+      if (q.includes('hitech') || q.includes('hi-tech')) return [17.4483, 78.3741];
+      return null;
     };
-
-    resolveAddresses();
+    const p = getCoords(booking.pickupAddress) || [17.4849, 78.3884];
+    const d = booking.tripType !== 'rental' ? (getCoords(booking.dropAddress) || [17.2403, 78.4294]) : null;
+    setPickupCoords(p);
+    setDropCoords(d);
   }, [booking?.id]);
 
-  // Fetch actual street route from OSRM between pickup & drop
+  // Fetch route
   useEffect(() => {
-    if (!pickupCoords) return;
-
-    const getRoutePath = async () => {
-      if (booking?.tripType === 'rental' || !dropCoords) {
-        setRouteCoords([]);
-        setCarCoords(pickupCoords);
-        return;
-      }
-
+    if (!pickupCoords || !dropCoords) return;
+    const getRoute = async () => {
       const routeInfo = await fetchMapRoute(pickupCoords[0], pickupCoords[1], dropCoords[0], dropCoords[1]);
       if (routeInfo) {
         setRouteCoords(routeInfo.routeCoords);
         setCarCoords(routeInfo.routeCoords[0]);
       } else {
-        console.warn('Routing path fetch failed in tracking.');
         setRouteCoords([pickupCoords, dropCoords]);
         setCarCoords(pickupCoords);
       }
-
-      // Straight line fallback
-      setRouteCoords([pickupCoords, dropCoords]);
-      setCarCoords(pickupCoords);
     };
+    getRoute();
+  }, [pickupCoords, dropCoords]);
 
-    getRoutePath();
-  }, [pickupCoords, dropCoords, booking?.tripType]);
-
-  // Move car along the route coords array based on progress percentage
+  // Move car along route
   useEffect(() => {
-    if (routeCoords.length === 0) {
-      if (pickupCoords) setCarCoords(pickupCoords);
-      return;
-    }
-
-    const index = Math.min(
-      routeCoords.length - 1,
-      Math.floor((progress / 100) * routeCoords.length)
-    );
-    setCarCoords(routeCoords[index]);
-  }, [progress, routeCoords, pickupCoords]);
+    if (routeCoords.length === 0) { if (pickupCoords) setCarCoords(pickupCoords); return; }
+    const idx = Math.min(routeCoords.length - 1, Math.floor((progress / 100) * routeCoords.length));
+    setCarCoords(routeCoords[idx]);
+  }, [progress, routeCoords]);
 
   const handleCancel = async () => {
     if (!booking) return;
-    if (window.confirm('Are you sure you want to cancel this booking?')) {
+    if (window.confirm('Cancel this booking?')) {
       await cancelBooking(booking.id);
+      navigate('/', { replace: true });
     }
   };
 
   const handleReviewSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!booking) return;
-
     addReviewToHistory(booking.id, rating, comment);
-    setReviewSubmitted(true);
     alert('Thank you for your feedback!');
-    navigate('/');
+    navigate('/', { replace: true });
+  };
+
+  const getStatusInfo = () => {
+    switch (booking?.status) {
+      case 'accepted': return { text: 'Driver Assigned', color: '#2196F3', desc: `${booking.driverName} is on the way`, pulse: false };
+      case 'driver_reached': return { text: 'Driver Arrived', color: '#FF9800', desc: 'Driver has reached your location', pulse: false };
+      case 'trip_started': return { text: 'Ride in Progress', color: '#4CAF50', desc: 'Heading to your destination', pulse: false };
+      case 'trip_completed': return { text: 'Completed', color: '#121212', desc: 'You have reached your destination', pulse: false };
+      case 'cancelled': return { text: 'Cancelled', color: '#F44336', desc: 'This booking was cancelled', pulse: false };
+      default: return { text: 'Finding Driver', color: '#FFC107', desc: 'Searching for nearest driver...', pulse: true };
+    }
   };
 
   if (!booking) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-        <Navigation className="w-12 h-12 text-brand-gold animate-bounce mb-3" />
-        <h3 className="font-bold text-sm">Searching Booking ID...</h3>
-        <p className="text-xs text-brand-textGray mt-1">We couldn't locate this active trip. It may have expired.</p>
-        <button onClick={() => navigate('/')} className="mt-4 px-4 py-2 bg-brand-dark text-white rounded-xl text-xs font-bold">
+      <div className="screen items-center justify-center p-6 text-center" style={{ background: '#F5F5F5' }}>
+        <Car className="w-12 h-12 mb-4 animate-pulse" style={{ color: '#FFC107' }} />
+        <h3 className="font-bold text-sm" style={{ color: '#121212' }}>Ride Not Found</h3>
+        <p className="text-xs mt-1" style={{ color: '#888' }}>This booking may have expired.</p>
+        <button onClick={() => navigate('/')} className="mt-4 px-5 py-2.5 rounded-xl text-xs font-bold text-white" style={{ background: '#121212' }}>
           Go Home
         </button>
       </div>
     );
   }
 
-  // Determine status color/text
-  const getStatusDetails = () => {
-    switch (booking.status) {
-      case 'accepted':
-        return { text: 'Driver Assigned', color: 'bg-blue-500 text-white', desc: 'Driver is arriving at your location.' };
-      case 'driver_reached':
-        return { text: 'Driver Reached', color: 'bg-amber-500 text-brand-dark', desc: 'Driver has arrived. Share OTP 1234.' };
-      case 'trip_started':
-        return { text: 'In Transit', color: 'bg-brand-success text-white', desc: 'Heading towards drop-off point.' };
-      case 'trip_completed':
-        return { text: 'Trip Finished', color: 'bg-brand-dark text-white', desc: 'Thank you for riding with Jolly Cabs!' };
-      case 'cancelled':
-        return { text: 'Cancelled', color: 'bg-brand-danger text-white', desc: 'This trip was cancelled.' };
-      case 'pending':
-      default:
-        return { text: 'Assigning Driver', color: 'bg-[#FFC107] text-brand-dark animate-pulse', desc: 'Finding the nearest verified cab...' };
-    }
-  };
-
-  const statusInfo = getStatusDetails();
+  const statusInfo = getStatusInfo();
 
   return (
-    <div className="flex-1 flex flex-col bg-brand-bgLight">
-      {/* Dynamic Status Header */}
-      <div className="bg-brand-dark text-white p-5 rounded-b-[32px] flex items-center justify-between shadow-md flex-shrink-0">
-        <div>
-          <span className="text-[10px] text-brand-textGray font-semibold uppercase block">Trip Tracking</span>
-          <h2 className="text-xs font-bold font-display mt-0.5">Booking ID: {booking.id}</h2>
+    <div className="screen" style={{ background: '#F5F5F5' }}>
+      {/* Header */}
+      <div className="flex-shrink-0 flex items-center justify-between px-5 py-4" style={{ background: '#121212' }}>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="w-9 h-9 rounded-xl flex items-center justify-center"
+            style={{ background: 'rgba(255,255,255,0.1)' }}
+          >
+            <ArrowLeft className="w-4 h-4 text-white" />
+          </button>
+          <div>
+            <span className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: 'rgba(255,255,255,0.5)' }}>
+              Booking {booking.id}
+            </span>
+            <h2 className="text-sm font-black text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>Live Tracking</h2>
+          </div>
         </div>
-        <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wide ${statusInfo.color}`}>
+        <span
+          className="px-3 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-wide"
+          style={{ background: `${statusInfo.color}20`, color: statusInfo.color, border: `1px solid ${statusInfo.color}40` }}
+        >
+          {statusInfo.pulse && <span className="mr-1 animate-pulse">●</span>}
           {statusInfo.text}
         </span>
       </div>
 
-      {/* Simulated Live Route Map */}
-      <div className="flex-1 min-h-[300px] relative overflow-hidden flex items-center justify-center bg-brand-borderLight z-0">
+      {/* Map */}
+      <div className="flex-1 relative min-h-0" style={{ minHeight: '250px' }}>
         {pickupCoords ? (
           <MapComponent
             pickupCoords={pickupCoords}
@@ -217,135 +155,151 @@ export const Tracking: React.FC = () => {
             carCoords={carCoords}
           />
         ) : (
-          <div className="flex flex-col items-center justify-center text-xs text-brand-textGray font-semibold gap-2">
-            <div className="w-6 h-6 border-2 border-brand-gold border-t-transparent rounded-full animate-spin" />
-            <span>Resolving street locations...</span>
+          <div className="w-full h-full flex items-center justify-center" style={{ background: '#E8E8E8' }}>
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#FFC107' }} />
+              <span className="text-xs font-semibold" style={{ color: '#888' }}>Loading map...</span>
+            </div>
           </div>
         )}
-        
-        {/* Live Tracking overlay card */}
-        <div className="absolute top-3 left-4 right-4 bg-white/95 border border-brand-borderLight p-3 rounded-2xl shadow-premium text-center z-10 backdrop-blur-sm">
-          <p className="text-[10px] text-brand-textGray font-bold uppercase tracking-wider">Ride Dispatch Status</p>
-          <p className="text-xs font-bold text-brand-textDark mt-1">{statusInfo.desc}</p>
+
+        {/* Status overlay */}
+        <div
+          className="absolute top-3 left-4 right-4 p-3 rounded-2xl z-10 backdrop-blur-sm"
+          style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid #EFEFEF' }}
+        >
+          <p className="text-[10px] font-bold uppercase tracking-wider text-center mb-0.5" style={{ color: '#aaa' }}>
+            Trip Status
+          </p>
+          <p className="text-xs font-bold text-center" style={{ color: '#121212' }}>{statusInfo.desc}</p>
         </div>
       </div>
 
-      {/* Driver info / Review Panels */}
-      <div className="bg-white rounded-t-[36px] border-t border-brand-borderLight p-6 flex-shrink-0 shadow-premium relative z-10">
+      {/* Driver / Review Panel */}
+      <div
+        className="flex-shrink-0 bg-white rounded-t-[32px] p-5"
+        style={{ border: '1px solid #F0F0F0', maxHeight: '45%', overflowY: 'auto' }}
+      >
         {booking.status === 'trip_completed' ? (
-          /* Post-Trip Rating Review Card */
-          <div className="flex flex-col gap-4 text-center animate-slide-up">
-            <div className="flex flex-col items-center">
-              <span className="px-2.5 py-0.5 bg-brand-success/10 border border-brand-success/20 rounded-full text-[9px] font-bold text-brand-success uppercase tracking-wide">
-                Completed
+          <div className="flex flex-col gap-4">
+            <div className="text-center">
+              <span className="inline-block px-3 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide" style={{ background: 'rgba(76,175,80,0.1)', color: '#4CAF50', border: '1px solid rgba(76,175,80,0.2)' }}>
+                Trip Completed
               </span>
-              <h3 className="text-sm font-bold text-brand-textDark mt-2">Rate Your Driver & Trip</h3>
-              <p className="text-[10px] text-brand-textGray mt-0.5">Help us improve Jolly Cabs premium taxi services.</p>
+              <h3 className="text-sm font-bold mt-2" style={{ color: '#121212' }}>Rate Your Experience</h3>
+              <p className="text-[10px] mt-0.5" style={{ color: '#888' }}>Help us improve Jolly Cabs</p>
             </div>
-
             <form onSubmit={handleReviewSubmit} className="flex flex-col gap-4">
-              {/* Star inputs */}
-              <div className="flex justify-center gap-2">
+              <div className="flex justify-center gap-3">
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setRating(star)}
-                    className="p-1"
-                  >
-                    <Star
-                      className={`w-6 h-6 ${
-                        star <= rating ? 'fill-brand-gold text-brand-gold' : 'text-brand-textGray/30'
-                      }`}
-                    />
+                  <button key={star} type="button" onClick={() => setRating(star)}>
+                    <Star className={`w-8 h-8 transition-all ${star <= rating ? 'fill-[#FFC107] text-[#FFC107]' : 'text-gray-200'}`} />
                   </button>
                 ))}
               </div>
-
-              {/* Review comments */}
               <input
                 type="text"
-                placeholder="E.g. Great ride, clean car, professional driver"
+                placeholder="Share your experience..."
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                className="w-full px-4 py-3 bg-brand-bgLight border border-brand-borderLight focus:border-brand-gold rounded-2xl text-xs font-semibold outline-none"
+                className="w-full px-4 py-3 rounded-2xl text-xs font-semibold outline-none"
+                style={{ background: '#F5F5F5', border: '1.5px solid #EFEFEF', color: '#121212' }}
               />
-
               <button
                 type="submit"
-                className="ripple-btn w-full bg-brand-gold text-brand-dark font-display font-black py-3.5 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-gold-glow uppercase tracking-wider"
+                className="ripple-btn w-full py-3.5 rounded-2xl text-xs font-black uppercase tracking-wider"
+                style={{ background: '#FFC107', color: '#121212', fontFamily: 'Poppins, sans-serif' }}
               >
-                Submit Feedback
+                Submit Rating
               </button>
             </form>
           </div>
         ) : (
-          /* Dispatch Active Driver Card */
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4">
+            {/* Driver info */}
             {booking.driverName ? (
-              <div className="flex items-center justify-between border-b border-brand-bgLight pb-4">
+              <div className="flex items-center justify-between border-b pb-4" style={{ borderColor: '#F5F5F5' }}>
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-full bg-brand-gold/10 border border-brand-gold/20 flex items-center justify-center font-display font-bold text-brand-gold text-sm">
-                    SR
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center font-black text-sm"
+                    style={{ background: 'rgba(255,193,7,0.12)', color: '#FFC107', border: '1px solid rgba(255,193,7,0.25)' }}
+                  >
+                    {booking.driverName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-brand-textDark">{booking.driverName}</h4>
-                    <p className="text-[10px] text-brand-textGray flex items-center gap-0.5 mt-0.5 font-semibold">
-                      <Star className="w-3 h-3 fill-brand-gold text-brand-gold" /> {booking.driverRating} • Verified
-                    </p>
+                    <h4 className="text-xs font-bold" style={{ color: '#121212' }}>{booking.driverName}</h4>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <Star className="w-3 h-3 fill-[#FFC107] text-[#FFC107]" />
+                      <span className="text-[10px] font-semibold" style={{ color: '#888' }}>{booking.driverRating} · Verified</span>
+                    </div>
                   </div>
                 </div>
-
                 <div className="text-right">
-                  <h4 className="text-xs font-bold text-brand-textDark">{booking.vehicleNumber}</h4>
-                  <p className="text-[9px] text-brand-textGray font-semibold mt-0.5">
-                    {booking.vehicleDetails?.name}
-                  </p>
+                  <p className="text-xs font-bold" style={{ color: '#121212' }}>{booking.vehicleNumber}</p>
+                  <p className="text-[9px] font-semibold mt-0.5" style={{ color: '#888' }}>{booking.vehicleDetails?.name}</p>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-center py-4 border-b border-brand-bgLight">
-                <p className="text-xs text-brand-textGray animate-pulse font-semibold">
-                  Waiting to assign chauffeur details...
+              <div className="flex items-center justify-center py-3 border-b" style={{ borderColor: '#F5F5F5' }}>
+                <p className="text-xs animate-pulse font-semibold" style={{ color: '#888' }}>
+                  Assigning driver...
                 </p>
               </div>
             )}
 
-            {/* Support Call/WhatsApp & SOS controls */}
-            <div className="flex items-center justify-between gap-3">
+            {/* Actions */}
+            <div className="flex items-center gap-3">
               <a
                 href="tel:+917981232371"
-                className="flex-1 flex items-center justify-center gap-2 border border-brand-borderLight text-brand-textDark hover:bg-brand-bgLight py-3 rounded-2xl text-xs font-bold transition-all"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl text-xs font-bold transition-all"
+                style={{ border: '1.5px solid #EFEFEF', color: '#121212' }}
               >
-                <Phone className="w-4 h-4 text-brand-gold" />
-                Call Driver
+                <Phone className="w-4 h-4" style={{ color: '#FFC107' }} />
+                Call Support
               </a>
 
-              {/* SOS Emergency button */}
               <button
-                onClick={() => alert('SOS Triggered! Dispatch team has been notified. Calling emergency services...')}
-                className="w-12 h-12 bg-red-600 hover:bg-red-700 text-white rounded-2xl flex items-center justify-center flex-shrink-0 shadow transition-colors"
-                title="SOS Trigger"
+                onClick={() => alert('SOS triggered! Emergency services notified.')}
+                className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all active:scale-95"
+                style={{ background: '#F44336' }}
               >
-                <Shield className="w-5 h-5" />
+                <Shield className="w-5 h-5 text-white" />
               </button>
 
-              {/* Cancel Option */}
               {(booking.status === 'pending' || booking.status === 'accepted') ? (
                 <button
                   onClick={handleCancel}
-                  className="flex-1 flex items-center justify-center gap-2 border border-brand-danger/30 text-brand-danger hover:bg-red-50 py-3 rounded-2xl text-xs font-bold transition-all"
+                  className="flex-1 flex items-center justify-center py-3 rounded-2xl text-xs font-bold transition-all"
+                  style={{ border: '1.5px solid rgba(244,67,54,0.3)', color: '#F44336' }}
                 >
                   Cancel Ride
                 </button>
               ) : (
-                <button
-                  disabled
-                  className="flex-1 flex items-center justify-center gap-2 border border-brand-borderLight text-brand-textGray py-3 rounded-2xl text-xs font-bold opacity-45 cursor-not-allowed"
+                <div
+                  className="flex-1 flex items-center justify-center py-3 rounded-2xl text-xs font-bold"
+                  style={{ border: '1.5px solid #EFEFEF', color: '#ccc' }}
                 >
-                  Trip Underway
-                </button>
+                  In Progress
+                </div>
               )}
+            </div>
+
+            {/* Route info */}
+            <div className="flex flex-col gap-2 px-1">
+              <div className="flex items-start gap-2">
+                <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: '#FFC107' }} />
+                <p className="text-[10px] font-semibold" style={{ color: '#888' }}>{booking.pickupAddress}</p>
+              </div>
+              {booking.tripType !== 'rental' && (
+                <div className="flex items-start gap-2">
+                  <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: '#F44336' }} />
+                  <p className="text-[10px] font-semibold" style={{ color: '#888' }}>{booking.dropAddress}</p>
+                </div>
+              )}
+              <div className="flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" style={{ color: '#888' }} />
+                <p className="text-[10px] font-semibold" style={{ color: '#888' }}>{booking.date} at {booking.time}</p>
+              </div>
             </div>
           </div>
         )}

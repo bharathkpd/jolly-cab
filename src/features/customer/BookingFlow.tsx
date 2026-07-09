@@ -200,7 +200,7 @@ export const BookingFlow: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-white">
+    <div className="flex-1 flex flex-col bg-white min-h-0">
       {/* Sticky Header */}
       <div className="bg-brand-dark text-white px-6 py-4 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">

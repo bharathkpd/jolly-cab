@@ -1,11 +1,11 @@
-import { useState } from 'react';
-import { HashRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { MemoryRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Home as HomeIcon, History, User2 } from 'lucide-react';
 
 import { useAuthStore } from './store/authStore';
-import { MobileContainer } from './components/MobileContainer';
 
-// Customers Features
+// Customer Screens
+import { SplashScreen } from './features/customer/SplashScreen';
 import { Onboarding } from './features/customer/Onboarding';
 import { Auth } from './features/customer/Auth';
 import { Home } from './features/customer/Home';
@@ -19,8 +19,6 @@ import { Profile } from './features/customer/Profile';
 import { OffersView } from './features/customer/OffersView';
 import { NotificationsView } from './features/customer/NotificationsView';
 import { PackagesView } from './features/customer/PackagesView';
-
-// Website Pages Implemented Inside App
 import { ServicesView } from './features/customer/ServicesView';
 import { FleetView } from './features/customer/FleetView';
 import { OutstationView } from './features/customer/OutstationView';
@@ -28,149 +26,217 @@ import { AirportView } from './features/customer/AirportView';
 import { SrisailamView } from './features/customer/SrisailamView';
 import { ContactView } from './features/customer/ContactView';
 
-// App Drawer
-import { AppDrawer } from './components/AppDrawer';
-
-// Splash Screen
-import { SplashScreen } from './features/customer/SplashScreen';
-
-// Admin Features
+// Admin Screens
 import { AdminLogin } from './features/admin/AdminLogin';
 import { AdminDashboard } from './features/admin/AdminDashboard';
 
-// Root controller to check onboarding, auth, and home state
-const CustomerAppController = () => {
-  const { isAuthenticated } = useAuthStore();
-  const [completedOnboarding, setCompletedOnboarding] = useState<boolean>(() => {
-    return localStorage.getItem('jolly_cabs_onboarding') === 'true';
-  });
+// Shared
+import { AppDrawer } from './components/AppDrawer';
 
-  if (!completedOnboarding) {
-    return (
-      <Onboarding 
-        onComplete={() => {
-          localStorage.setItem('jolly_cabs_onboarding', 'true');
-          setCompletedOnboarding(true);
-        }} 
-      />
-    );
-  }
+// ─── Route Guards ─────────────────────────────────────────────────────────────
 
-  if (!isAuthenticated) {
-    return <Auth />;
-  }
-
-  return <Home />;
-};
-
-// Route guards
 const CustomerRouteGuard = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated } = useAuthStore();
-  return isAuthenticated ? <>{children}</> : <Navigate to="/" replace />;
+  const { isAuthenticated, authReady } = useAuthStore();
+  if (!authReady) return null;
+  return isAuthenticated ? <>{children}</> : <Navigate to="/auth" replace />;
 };
 
 const AdminRouteGuard = ({ children }: { children: React.ReactNode }) => {
-  const { isAdmin } = useAuthStore();
+  const { isAdmin, authReady } = useAuthStore();
+  if (!authReady) return null;
   return isAdmin ? <>{children}</> : <Navigate to="/admin/login" replace />;
 };
 
-// Bottom Navigation Bar for customer app pages
+// ─── Bottom Navigation Bar ────────────────────────────────────────────────────
+
 const BottomNavBar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
-  
-  // Hide on onboarding, login, success, track pages, or admin views
-  const hideOnPaths = ['/success', '/admin', '/track'];
-  const shouldHide = 
-    hideOnPaths.some(p => location.pathname.startsWith(p)) ||
-    !isAuthenticated ||
-    localStorage.getItem('jolly_cabs_onboarding') !== 'true';
 
-  if (shouldHide) return null;
+  const mainRoutes = ['/', '/trips', '/profile'];
+  const isMainRoute = mainRoutes.includes(location.pathname);
+
+  if (!isAuthenticated || !isMainRoute) return null;
+
+  const tabs = [
+    { path: '/', icon: HomeIcon, label: 'Home' },
+    { path: '/trips', icon: History, label: 'Rides' },
+    { path: '/profile', icon: User2, label: 'Profile' }
+  ];
 
   return (
-    <div className="h-16 bg-white border-t border-brand-borderLight flex items-center justify-around z-40 shadow-premium select-none flex-shrink-0 relative">
-      <Link 
-        to="/" 
-        className={`flex flex-col items-center gap-1 text-[10px] font-bold transition-all ${
-          location.pathname === '/' ? 'text-brand-dark scale-105' : 'text-brand-textGray hover:text-brand-textDark'
-        }`}
-      >
-        <HomeIcon className={`w-5 h-5 ${location.pathname === '/' ? 'text-brand-gold stroke-[2.5]' : 'text-brand-textGray'}`} />
-        <span>Home</span>
-      </Link>
-      
-      <Link 
-        to="/trips" 
-        className={`flex flex-col items-center gap-1 text-[10px] font-bold transition-all ${
-          location.pathname === '/trips' ? 'text-brand-dark scale-105' : 'text-brand-textGray hover:text-brand-textDark'
-        }`}
-      >
-        <History className={`w-5 h-5 ${location.pathname === '/trips' ? 'text-brand-gold stroke-[2.5]' : 'text-brand-textGray'}`} />
-        <span>Rides</span>
-      </Link>
-      
-      <Link 
-        to="/profile" 
-        className={`flex flex-col items-center gap-1 text-[10px] font-bold transition-all ${
-          location.pathname === '/profile' ? 'text-brand-dark scale-105' : 'text-brand-textGray hover:text-brand-textDark'
-        }`}
-      >
-        <User2 className={`w-5 h-5 ${location.pathname === '/profile' ? 'text-brand-gold stroke-[2.5]' : 'text-brand-textGray'}`} />
-        <span>Profile</span>
-      </Link>
+    <div
+      className="flex-shrink-0 bg-white border-t border-gray-100 flex items-center justify-around safe-area-bottom"
+      style={{ height: '60px', paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+    >
+      {tabs.map(({ path, icon: Icon, label }) => {
+        const active = location.pathname === path;
+        return (
+          <button
+            key={path}
+            onClick={() => navigate(path)}
+            className={`flex flex-col items-center justify-center gap-0.5 h-full flex-1 transition-all ${
+              active ? 'text-[#121212]' : 'text-gray-400'
+            }`}
+          >
+            <Icon
+              className={`w-5 h-5 transition-all ${
+                active ? 'text-[#FFC107] stroke-[2.5]' : 'text-gray-400 stroke-2'
+              }`}
+            />
+            <span className={`text-[10px] font-bold tracking-wide ${active ? 'text-[#121212]' : 'text-gray-400'}`}>
+              {label}
+            </span>
+            {active && (
+              <div className="w-1 h-1 rounded-full bg-[#FFC107] mt-0.5" />
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 };
 
-export const App = () => {
-  const [showSplash, setShowSplash] = useState(true);
+// ─── Auth Bootstrap ───────────────────────────────────────────────────────────
+// Handles the initial routing decision after splash:
+//   1. Onboarding (first launch only)
+//   2. Auth (not logged in)
+//   3. Home (logged in)
+
+const AuthBootstrap = () => {
+  const { isAuthenticated, authReady } = useAuthStore();
+  const navigate = useNavigate();
+  const [onboardingDone] = useState(() =>
+    localStorage.getItem('jolly_cabs_onboarding') === 'true'
+  );
+
+  useEffect(() => {
+    if (!authReady) return;
+    if (!onboardingDone) {
+      navigate('/onboarding', { replace: true });
+    } else if (isAuthenticated) {
+      navigate('/', { replace: true });
+    } else {
+      navigate('/auth', { replace: true });
+    }
+  }, [authReady, isAuthenticated, onboardingDone, navigate]);
+
+  // Show spinner while Firebase resolves
+  return (
+    <div className="flex-1 flex items-center justify-center bg-[#FFC107]">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-20 h-20 rounded-full bg-[#121212] flex items-center justify-center shadow-2xl">
+          <span className="font-bold text-2xl text-[#FFC107]" style={{ fontFamily: 'Poppins, sans-serif' }}>JC</span>
+        </div>
+        <div className="w-6 h-6 rounded-full border-2 border-[#121212] border-t-transparent animate-spin" />
+      </div>
+    </div>
+  );
+};
+
+// ─── App Shell ────────────────────────────────────────────────────────────────
+
+const AppShell = () => {
+  const { initializeAuth, authReady } = useAuthStore();
+  const [splashDone, setSplashDone] = useState(() => {
+    // Splash only once per session (app launch)
+    return sessionStorage.getItem('jolly_cabs_splash_shown') === 'true';
+  });
+
+  useEffect(() => {
+    // Initialize Firebase auth state listener on app boot
+    initializeAuth();
+  }, [initializeAuth]);
+
+  const handleSplashFinished = () => {
+    sessionStorage.setItem('jolly_cabs_splash_shown', 'true');
+    setSplashDone(true);
+  };
 
   return (
-    <Router>
-      <MobileContainer>
-        <div className="flex-1 flex flex-col relative h-full overflow-hidden min-h-0">
-          {showSplash ? (
-            <SplashScreen onFinished={() => setShowSplash(false)} />
-          ) : (
-            <>
-              <Routes>
-                {/* Customer Routes */}
-                <Route path="/" element={<CustomerAppController />} />
-                <Route path="/booking" element={<CustomerRouteGuard><BookingFlow /></CustomerRouteGuard>} />
-                <Route path="/vehicles" element={<CustomerRouteGuard><VehicleSelection /></CustomerRouteGuard>} />
-                <Route path="/payment" element={<CustomerRouteGuard><Payment /></CustomerRouteGuard>} />
-                <Route path="/success" element={<CustomerRouteGuard><Success /></CustomerRouteGuard>} />
-                <Route path="/track/:bookingId" element={<CustomerRouteGuard><Tracking /></CustomerRouteGuard>} />
-                <Route path="/trips" element={<CustomerRouteGuard><Trips /></CustomerRouteGuard>} />
-                <Route path="/profile" element={<CustomerRouteGuard><Profile /></CustomerRouteGuard>} />
-                <Route path="/offers" element={<CustomerRouteGuard><OffersView /></CustomerRouteGuard>} />
-                <Route path="/notifications" element={<CustomerRouteGuard><NotificationsView /></CustomerRouteGuard>} />
-                <Route path="/packages" element={<CustomerRouteGuard><PackagesView /></CustomerRouteGuard>} />
+    <div
+      className="flex flex-col bg-[#F8F8F8]"
+      style={{ height: '100dvh', overflow: 'hidden' }}
+    >
+      {!splashDone ? (
+        <SplashScreen onFinished={handleSplashFinished} />
+      ) : (
+        <>
+          <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+            <Routes>
+              {/* Boot — resolves where to go after splash */}
+              <Route path="/boot" element={<AuthBootstrap />} />
 
-                {/* Website Subpages */}
-                <Route path="/services" element={<CustomerRouteGuard><ServicesView /></CustomerRouteGuard>} />
-                <Route path="/fleet" element={<CustomerRouteGuard><FleetView /></CustomerRouteGuard>} />
-                <Route path="/outstation" element={<CustomerRouteGuard><OutstationView /></CustomerRouteGuard>} />
-                <Route path="/airport" element={<CustomerRouteGuard><AirportView /></CustomerRouteGuard>} />
-                <Route path="/srisailam" element={<CustomerRouteGuard><SrisailamView /></CustomerRouteGuard>} />
-                <Route path="/contact" element={<CustomerRouteGuard><ContactView /></CustomerRouteGuard>} />
+              {/* Onboarding — first launch only */}
+              <Route
+                path="/onboarding"
+                element={
+                  <Onboarding
+                    onComplete={() => {
+                      localStorage.setItem('jolly_cabs_onboarding', 'true');
+                      // After onboarding, go to auth
+                      window.location.hash = '#/auth';
+                    }}
+                  />
+                }
+              />
 
-                {/* Admin Routes */}
-                <Route path="/admin/login" element={<AdminLogin />} />
-                <Route path="/admin" element={<AdminRouteGuard><AdminDashboard /></AdminRouteGuard>} />
-                
-                {/* Catch All */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-              
-              <AppDrawer />
-              <BottomNavBar />
-            </>
-          )}
-        </div>
-      </MobileContainer>
-    </Router>
+              {/* Auth */}
+              <Route path="/auth" element={<Auth />} />
+
+              {/* Customer Home — root */}
+              <Route path="/" element={<CustomerRouteGuard><Home /></CustomerRouteGuard>} />
+
+              {/* Booking Flow */}
+              <Route path="/booking" element={<CustomerRouteGuard><BookingFlow /></CustomerRouteGuard>} />
+              <Route path="/vehicles" element={<CustomerRouteGuard><VehicleSelection /></CustomerRouteGuard>} />
+              <Route path="/payment" element={<CustomerRouteGuard><Payment /></CustomerRouteGuard>} />
+              <Route path="/success" element={<CustomerRouteGuard><Success /></CustomerRouteGuard>} />
+              <Route path="/track/:bookingId" element={<CustomerRouteGuard><Tracking /></CustomerRouteGuard>} />
+
+              {/* Main Tabs */}
+              <Route path="/trips" element={<CustomerRouteGuard><Trips /></CustomerRouteGuard>} />
+              <Route path="/profile" element={<CustomerRouteGuard><Profile /></CustomerRouteGuard>} />
+
+              {/* Secondary Screens */}
+              <Route path="/offers" element={<CustomerRouteGuard><OffersView /></CustomerRouteGuard>} />
+              <Route path="/notifications" element={<CustomerRouteGuard><NotificationsView /></CustomerRouteGuard>} />
+              <Route path="/packages" element={<CustomerRouteGuard><PackagesView /></CustomerRouteGuard>} />
+              <Route path="/services" element={<CustomerRouteGuard><ServicesView /></CustomerRouteGuard>} />
+              <Route path="/fleet" element={<CustomerRouteGuard><FleetView /></CustomerRouteGuard>} />
+              <Route path="/outstation" element={<CustomerRouteGuard><OutstationView /></CustomerRouteGuard>} />
+              <Route path="/airport" element={<CustomerRouteGuard><AirportView /></CustomerRouteGuard>} />
+              <Route path="/srisailam" element={<CustomerRouteGuard><SrisailamView /></CustomerRouteGuard>} />
+              <Route path="/contact" element={<CustomerRouteGuard><ContactView /></CustomerRouteGuard>} />
+
+              {/* Admin */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin" element={<AdminRouteGuard><AdminDashboard /></AdminRouteGuard>} />
+
+              {/* Catch-all */}
+              <Route path="*" element={<Navigate to="/boot" replace />} />
+            </Routes>
+          </div>
+
+          {/* App Drawer (slide-in menu) */}
+          <AppDrawer />
+
+          {/* Bottom Nav — only on main tabs */}
+          <BottomNavBar />
+        </>
+      )}
+    </div>
+  );
+};
+
+// ─── Root App ─────────────────────────────────────────────────────────────────
+
+export const App = () => {
+  return (
+    <MemoryRouter initialEntries={['/boot']} initialIndex={0}>
+      <AppShell />
+    </MemoryRouter>
   );
 };
 

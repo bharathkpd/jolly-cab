@@ -18,8 +18,10 @@ export const Profile: React.FC = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   const handleLogout = () => {
-    logout();
-    navigate('/');
+    if (window.confirm('Are you sure you want to logout?')) {
+      logout();
+      navigate('/auth', { replace: true });
+    }
   };
 
   const handleDeleteAccount = () => {
@@ -31,8 +33,8 @@ export const Profile: React.FC = () => {
       localStorage.removeItem('jolly_cabs_bookings');
       localStorage.removeItem('jolly_cabs_user');
       logout();
-      alert('Your account and personal data have been completely deleted.');
-      navigate('/');
+      alert('Your account and data have been deleted.');
+      navigate('/auth', { replace: true });
     }
   };
 
@@ -59,7 +61,7 @@ export const Profile: React.FC = () => {
       <div className="bg-brand-dark text-white p-5 rounded-b-[32px] flex items-center justify-between shadow-md flex-shrink-0">
         <div className="flex items-center gap-3">
           <button 
-            onClick={() => navigate('/')} 
+            onClick={() => navigate(-1)} 
             className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center hover:bg-white/15 transition-all"
           >
             <ArrowLeft className="w-4 h-4 text-white" />

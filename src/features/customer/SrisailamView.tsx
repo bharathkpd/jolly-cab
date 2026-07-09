@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Menu, Compass, Eye, AlertCircle, Clock, Calendar, CheckCircle, MapPin, Phone, MessageSquare } from 'lucide-react';
 import { useUiStore } from '../../store/uiStore';
 import { useBookingStore } from '../../store/bookingStore';
+import { getAssetUrl } from '../../utils/assets';
 
 export const SrisailamView: React.FC = () => {
   const navigate = useNavigate();
@@ -86,7 +87,7 @@ export const SrisailamView: React.FC = () => {
         <div className="flex items-center gap-3">
           <button 
             type="button"
-            onClick={() => navigate('/')} 
+            onClick={() => navigate(-1)} 
             className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center hover:bg-white/15 transition-all"
           >
             <ArrowLeft className="w-4 h-4 text-white" />
@@ -110,7 +111,7 @@ export const SrisailamView: React.FC = () => {
           <div className="h-40 w-full overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-t from-brand-dark to-transparent z-10" />
             <img 
-              src="/vehicles/srisailam_temple.jpg" 
+              src={getAssetUrl('/vehicles/srisailam_temple.jpg')} 
               alt="Srisailam Temple" 
               className="w-full h-full object-cover"
             />

@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Compass, Clock, MapPin, BadgePercent } from 'lucide-react';
 import { useBookingStore } from '../../store/bookingStore';
+import { getAssetUrl } from '../../utils/assets';
 
 interface TravelPackage {
   id: string;
@@ -132,7 +133,7 @@ export const PackagesView: React.FC = () => {
             {/* Package Cover Image */}
             <div className="h-44 w-full relative bg-brand-navy overflow-hidden">
               <img
-                src={pkg.image}
+                src={getAssetUrl(pkg.image)}
                 alt={pkg.name}
                 className="w-full h-full object-cover"
               />

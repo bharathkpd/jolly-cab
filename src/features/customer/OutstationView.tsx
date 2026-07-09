@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Menu, Compass, Calendar, AlertCircle, Phone, MessageSquare } from 'lucide-react';
 import { useUiStore } from '../../store/uiStore';
 import { useBookingStore } from '../../store/bookingStore';
+import { getAssetUrl } from '../../utils/assets';
 
 export const OutstationView: React.FC = () => {
   const navigate = useNavigate();
@@ -102,7 +103,7 @@ export const OutstationView: React.FC = () => {
               <div key={idx} className="bg-white rounded-2xl border border-brand-borderLight shadow-sm overflow-hidden flex flex-col justify-between">
                 <div className="h-20 w-full overflow-hidden bg-brand-bgLight">
                   <img 
-                    src={r.image} 
+                    src={getAssetUrl(r.image)} 
                     alt={r.destination} 
                     className="w-full h-full object-cover"
                   />

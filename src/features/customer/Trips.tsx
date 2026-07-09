@@ -1,92 +1,103 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, MapPin, Star, AlertCircle, FileText, ChevronRight, XCircle, Navigation } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, Star, FileText, Navigation, XCircle, Car, RefreshCw } from 'lucide-react';
 import { useBookingStore } from '../../store/bookingStore';
 import { useAuthStore } from '../../store/authStore';
 import { Booking } from '../../types';
 
-type TabType = 'upcoming' | 'completed' | 'cancelled';
+type TabType = 'active' | 'completed' | 'cancelled';
 
 export const Trips: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { history, loadHistory } = useBookingStore();
+  const { history, activeBooking, loadHistory, cancelBooking, clearBookingForm, setBookingField } = useBookingStore();
   const [selectedInvoice, setSelectedInvoice] = useState<Booking | null>(null);
-  const [activeTab, setActiveTab] = useState<TabType>('upcoming');
+  const [activeTab, setActiveTab] = useState<TabType>('active');
 
   useEffect(() => {
-    if (user?.phone) {
-      loadHistory(user.phone);
-    }
+    if (user?.phone) loadHistory(user.phone);
   }, [user, loadHistory]);
 
-  const handleBack = () => {
-    navigate('/');
+  const activeStatuses = ['pending', 'accepted', 'driver_assigned', 'driver_reached', 'trip_started'];
+
+  const statusLabel = (status: Booking['status']) => {
+    const map: Record<string, string> = {
+      pending: 'Finding Driver',
+      accepted: 'Driver Assigned',
+      driver_assigned: 'Driver Assigned',
+      driver_reached: 'Driver Arrived',
+      trip_started: 'In Progress',
+      trip_completed: 'Completed',
+      cancelled: 'Cancelled'
+    };
+    return map[status] || status;
   };
 
-  const getStatusBadge = (status: Booking['status']) => {
-    switch (status) {
-      case 'trip_completed':
-        return 'bg-brand-success/10 border-brand-success/20 text-brand-success';
-      case 'cancelled':
-        return 'bg-brand-danger/10 border-brand-danger/20 text-brand-danger';
-      case 'pending':
-      case 'accepted':
-      case 'driver_assigned':
-      case 'driver_reached':
-      case 'trip_started':
-        return 'bg-brand-gold/10 border-brand-gold/20 text-brand-gold';
-      default:
-        return 'bg-brand-bgLight border-brand-borderLight text-brand-textGray';
-    }
+  const statusColor = (status: Booking['status']) => {
+    if (status === 'trip_completed') return { bg: 'rgba(76,175,80,0.1)', color: '#4CAF50', border: 'rgba(76,175,80,0.25)' };
+    if (status === 'cancelled') return { bg: 'rgba(244,67,54,0.1)', color: '#F44336', border: 'rgba(244,67,54,0.25)' };
+    return { bg: 'rgba(255,193,7,0.1)', color: '#E6AC00', border: 'rgba(255,193,7,0.35)' };
   };
 
-  const upcomingStatuses = ['pending', 'accepted', 'driver_assigned', 'driver_reached', 'trip_started'];
-  const filteredTrips = history.filter((trip) => {
-    if (activeTab === 'upcoming') return upcomingStatuses.includes(trip.status);
-    if (activeTab === 'completed') return trip.status === 'trip_completed';
-    if (activeTab === 'cancelled') return trip.status === 'cancelled';
-    return true;
-  });
-
-  const tabs: { id: TabType; label: string; count: number }[] = [
-    { id: 'upcoming', label: 'Upcoming', count: history.filter(t => upcomingStatuses.includes(t.status)).length },
-    { id: 'completed', label: 'Completed', count: history.filter(t => t.status === 'trip_completed').length },
-    { id: 'cancelled', label: 'Cancelled', count: history.filter(t => t.status === 'cancelled').length },
+  const tabs: { id: TabType; label: string }[] = [
+    { id: 'active', label: 'Active' },
+    { id: 'completed', label: 'Completed' },
+    { id: 'cancelled', label: 'Cancelled' }
   ];
 
+  const filteredTrips = history.filter((t) => {
+    if (activeTab === 'active') return activeStatuses.includes(t.status);
+    if (activeTab === 'completed') return t.status === 'trip_completed';
+    if (activeTab === 'cancelled') return t.status === 'cancelled';
+    return false;
+  });
+
+  const counts = {
+    active: history.filter(t => activeStatuses.includes(t.status)).length,
+    completed: history.filter(t => t.status === 'trip_completed').length,
+    cancelled: history.filter(t => t.status === 'cancelled').length
+  };
+
+  const handleRebook = (trip: Booking) => {
+    clearBookingForm();
+    setBookingField('tripType', trip.tripType);
+    setBookingField('pickupAddress', trip.pickupAddress);
+    setBookingField('dropAddress', trip.dropAddress);
+    navigate('/booking');
+  };
+
   return (
-    <div className="flex-1 flex flex-col bg-brand-bgLight min-h-0">
-      {/* Header sticky bar */}
-      <div className="bg-brand-dark text-white p-5 rounded-b-[32px] flex flex-col gap-4 shadow-md flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={handleBack} 
-            className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center hover:bg-white/15 transition-all"
-          >
-            <ArrowLeft className="w-4 h-4 text-white" />
-          </button>
-          <h2 className="text-sm font-display font-bold">My Bookings</h2>
+    <div className="screen" style={{ background: '#F5F5F5' }}>
+      {/* Header */}
+      <div className="flex-shrink-0" style={{ background: '#121212' }}>
+        <div className="flex items-center gap-3 px-5 pt-5 pb-4">
+          <h2 className="text-base font-black text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            My Rides
+          </h2>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2">
-          {tabs.map((tab) => (
+        <div className="flex gap-2 px-5 pb-4">
+          {tabs.map(({ id, label }) => (
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 py-2 rounded-xl text-[10px] font-bold transition-all flex items-center justify-center gap-1.5 ${
-                activeTab === tab.id
-                  ? 'bg-brand-gold text-brand-dark'
-                  : 'bg-white/10 text-white/70 hover:bg-white/15'
-              }`}
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className="flex-1 py-2 rounded-xl text-[10px] font-bold transition-all flex items-center justify-center gap-1"
+              style={{
+                background: activeTab === id ? '#FFC107' : 'rgba(255,255,255,0.1)',
+                color: activeTab === id ? '#121212' : 'rgba(255,255,255,0.6)'
+              }}
             >
-              {tab.label}
-              {tab.count > 0 && (
-                <span className={`w-4 h-4 rounded-full text-[8px] font-black flex items-center justify-center ${
-                  activeTab === tab.id ? 'bg-brand-dark text-brand-gold' : 'bg-white/20 text-white'
-                }`}>
-                  {tab.count}
+              {label}
+              {counts[id] > 0 && (
+                <span
+                  className="w-4 h-4 rounded-full text-[8px] font-black flex items-center justify-center"
+                  style={{
+                    background: activeTab === id ? '#121212' : 'rgba(255,255,255,0.2)',
+                    color: activeTab === id ? '#FFC107' : '#fff'
+                  }}
+                >
+                  {counts[id]}
                 </span>
               )}
             </button>
@@ -94,183 +105,212 @@ export const Trips: React.FC = () => {
         </div>
       </div>
 
-      {/* Trips list body */}
-      <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-4">
+      {/* Trips List */}
+      <div className="screen-body p-4 flex flex-col gap-3">
+
+        {/* Active booking highlight */}
+        {activeTab === 'active' && activeBooking && activeStatuses.includes(activeBooking.status) && (
+          <button
+            onClick={() => navigate(`/track/${activeBooking.id}`)}
+            className="w-full rounded-3xl p-4 text-left flex items-center gap-3 active:scale-[0.98] transition-all"
+            style={{ background: '#121212', border: '1px solid rgba(255,193,7,0.2)' }}
+          >
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#FFC107' }}>
+              <Navigation className="w-5 h-5 animate-pulse" style={{ color: '#121212' }} />
+            </div>
+            <div className="flex-1">
+              <span className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                Current Ride · {activeBooking.id}
+              </span>
+              <p className="text-xs font-bold mt-0.5 text-white">{statusLabel(activeBooking.status)}</p>
+              <p className="text-[10px] mt-0.5 truncate max-w-[200px]" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                {activeBooking.pickupAddress}
+              </p>
+            </div>
+            <div className="px-3 py-1 rounded-xl" style={{ background: '#FFC107' }}>
+              <span className="text-[10px] font-black" style={{ color: '#121212' }}>Track</span>
+            </div>
+          </button>
+        )}
+
         {filteredTrips.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center py-20">
-            <Clock className="w-12 h-12 text-brand-textGray/40 mb-3" />
-            <h3 className="font-bold text-sm text-brand-textDark">
-              {activeTab === 'upcoming' ? 'No Upcoming Rides' : activeTab === 'completed' ? 'No Completed Rides' : 'No Cancelled Rides'}
+          <div className="flex-1 flex flex-col items-center justify-center text-center py-24">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: '#F0F0F0' }}>
+              <Car className="w-8 h-8" style={{ color: '#ddd' }} />
+            </div>
+            <h3 className="font-bold text-sm" style={{ color: '#121212' }}>
+              {activeTab === 'active' ? 'No Active Rides' : activeTab === 'completed' ? 'No Completed Rides' : 'No Cancelled Rides'}
             </h3>
-            <p className="text-xs text-brand-textGray mt-1">
-              {activeTab === 'upcoming' ? 'Book your first premium ride with Jolly Cabs now!' : 'Rides will appear here once available.'}
+            <p className="text-xs mt-1 max-w-[200px]" style={{ color: '#888' }}>
+              {activeTab === 'active' ? 'Your booked rides will appear here.' : 'Completed rides will appear here.'}
             </p>
-            {activeTab === 'upcoming' && (
+            {activeTab === 'active' && (
               <button
                 onClick={() => navigate('/booking')}
-                className="mt-4 px-5 py-2.5 bg-brand-gold text-brand-dark rounded-xl text-xs font-black shadow-gold-glow uppercase tracking-wider transition-all hover:bg-brand-lightGold"
+                className="mt-4 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-white"
+                style={{ background: '#FFC107', color: '#121212' }}
               >
-                Book Cab Ride
+                Book a Ride
               </button>
             )}
           </div>
         ) : (
-          filteredTrips.map((trip) => (
-            <div
-              key={trip.id}
-              className="bg-white rounded-3xl p-4 border border-brand-borderLight shadow-sm flex flex-col gap-3 relative"
-            >
-              <div className="flex items-center justify-between border-b border-brand-bgLight pb-3">
-                <div>
-                  <span className="text-[9px] text-brand-textGray font-bold uppercase tracking-wider block">
-                    ID: {trip.id}
-                  </span>
-                  <span className="text-[10px] font-bold text-brand-textDark mt-0.5 block">
-                    {trip.date} at {trip.time}
-                  </span>
-                </div>
-                <span className={`px-2.5 py-0.5 rounded-full border text-[9px] font-bold uppercase tracking-wide ${getStatusBadge(trip.status)}`}>
-                  {trip.status.replace('_', ' ')}
-                </span>
-              </div>
-
-              {/* Locations details */}
-              <div className="flex flex-col gap-2 text-[11px] text-brand-textDark">
-                <div className="flex gap-2">
-                  <MapPin className="w-3.5 h-3.5 text-brand-gold flex-shrink-0 mt-0.5" />
-                  <span className="truncate max-w-[280px]">{trip.pickupAddress}</span>
-                </div>
-                {trip.tripType !== 'rental' && (
-                  <div className="flex gap-2">
-                    <MapPin className="w-3.5 h-3.5 text-brand-danger flex-shrink-0 mt-0.5" />
-                    <span className="truncate max-w-[280px]">{trip.dropAddress}</span>
+          filteredTrips.map((trip) => {
+            const sc = statusColor(trip.status);
+            const isActive = activeStatuses.includes(trip.status);
+            return (
+              <div
+                key={trip.id}
+                className="bg-white rounded-3xl p-4 flex flex-col gap-3"
+                style={{ border: '1px solid #F0F0F0' }}
+              >
+                {/* Trip header */}
+                <div className="flex items-center justify-between border-b pb-3" style={{ borderColor: '#F5F5F5' }}>
+                  <div>
+                    <span className="text-[9px] font-bold uppercase tracking-wider block" style={{ color: '#aaa' }}>
+                      {trip.id}
+                    </span>
+                    <span className="text-[10px] font-bold block mt-0.5" style={{ color: '#121212' }}>
+                      {trip.date} · {trip.time}
+                    </span>
                   </div>
-                )}
-              </div>
-
-              {/* Bottom details */}
-              <div className="flex items-center justify-between pt-3 border-t border-brand-bgLight mt-1.5">
-                <span className="text-[10px] text-brand-textGray">
-                  Vehicle: <strong className="text-brand-textDark">{trip.vehicleDetails?.name.split('/')[0]}</strong>
-                </span>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-brand-textDark font-mono">
-                    ₹{trip.fareBreakdown.total}
+                  <span
+                    className="px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide"
+                    style={{ background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}
+                  >
+                    {statusLabel(trip.status)}
                   </span>
-                  
-                  {/* Action buttons based on status */}
-                  {trip.status === 'trip_completed' && (
-                    <button
-                      onClick={() => setSelectedInvoice(trip)}
-                      className="w-7 h-7 rounded-lg bg-brand-gold/10 hover:bg-brand-gold/20 flex items-center justify-center text-brand-gold transition-colors"
-                      title="View Invoice"
-                    >
-                      <FileText className="w-4 h-4" />
-                    </button>
-                  )}
+                </div>
 
-                  {upcomingStatuses.includes(trip.status) && (
-                    <>
-                      <button
-                        onClick={() => navigate(`/track/${trip.id}`)}
-                        className="w-7 h-7 rounded-lg bg-brand-dark hover:bg-brand-dark/90 flex items-center justify-center text-brand-gold transition-colors"
-                        title="Track ride"
-                      >
-                        <Navigation className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => alert(`Cancel booking ${trip.id}? This feature will be connected to Firebase in Phase 4.`)}
-                        className="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 flex items-center justify-center text-red-500 transition-colors"
-                        title="Cancel ride"
-                      >
-                        <XCircle className="w-3.5 h-3.5" />
-                      </button>
-                    </>
+                {/* Route */}
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: '#FFC107' }} />
+                    <p className="text-[11px] font-semibold truncate max-w-[260px]" style={{ color: '#121212' }}>{trip.pickupAddress}</p>
+                  </div>
+                  {trip.tripType !== 'rental' && (
+                    <div className="flex items-start gap-2">
+                      <MapPin className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: '#F44336' }} />
+                      <p className="text-[11px] font-semibold truncate max-w-[260px]" style={{ color: '#121212' }}>{trip.dropAddress}</p>
+                    </div>
                   )}
                 </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: '#F5F5F5' }}>
+                  <span className="text-[10px]" style={{ color: '#888' }}>
+                    {trip.vehicleDetails?.name} · <span className="font-black font-mono" style={{ color: '#121212' }}>₹{trip.fareBreakdown?.total}</span>
+                  </span>
+
+                  <div className="flex items-center gap-2">
+                    {trip.status === 'trip_completed' && (
+                      <>
+                        <button
+                          onClick={() => handleRebook(trip)}
+                          title="Rebook"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all active:scale-95"
+                          style={{ background: 'rgba(255,193,7,0.1)', border: '1px solid rgba(255,193,7,0.25)' }}
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" style={{ color: '#FFC107' }} />
+                        </button>
+                        <button
+                          onClick={() => setSelectedInvoice(trip)}
+                          title="Invoice"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all active:scale-95"
+                          style={{ background: '#F5F5F5' }}
+                        >
+                          <FileText className="w-3.5 h-3.5" style={{ color: '#888' }} />
+                        </button>
+                      </>
+                    )}
+                    {isActive && (
+                      <>
+                        <button
+                          onClick={() => navigate(`/track/${trip.id}`)}
+                          title="Track"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center text-white transition-all active:scale-95"
+                          style={{ background: '#121212' }}
+                        >
+                          <Navigation className="w-3.5 h-3.5" style={{ color: '#FFC107' }} />
+                        </button>
+                        <button
+                          onClick={() => { if (window.confirm('Cancel this booking?')) cancelBooking(trip.id); }}
+                          title="Cancel"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all active:scale-95"
+                          style={{ background: 'rgba(244,67,54,0.06)', border: '1px solid rgba(244,67,54,0.2)' }}
+                        >
+                          <XCircle className="w-3.5 h-3.5" style={{ color: '#F44336' }} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
-      {/* Invoice Detailed Modal */}
+      {/* Invoice Modal */}
       {selectedInvoice && (
-        <div className="fixed inset-0 bg-brand-dark/60 backdrop-blur-xs flex items-center justify-center p-6 z-50">
-          <div className="bg-white rounded-[32px] w-full max-w-[320px] p-5 shadow-2xl border border-brand-borderLight animate-skeleton-pulse">
-            <h3 className="font-display font-bold text-sm text-brand-textDark text-center border-b border-brand-bgLight pb-3">
-              Jolly Cabs Tax Invoice
-            </h3>
-            
-            <div className="my-4 flex flex-col gap-2 text-[10px] text-brand-textDark">
-              <div className="flex justify-between font-bold text-brand-textGray uppercase">
-                <span>Invoice ID: {selectedInvoice.id.replace('BK_', 'INV_')}</span>
-                <span>GSTIN: 36JCABS4422A1Z0</span>
+        <div
+          className="fixed inset-0 flex items-center justify-center p-6 z-50"
+          style={{ background: 'rgba(18,18,18,0.65)' }}
+          onClick={() => setSelectedInvoice(null)}
+        >
+          <div
+            className="bg-white rounded-[32px] w-full max-w-sm p-5 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center border-b pb-3 mb-4" style={{ borderColor: '#F5F5F5' }}>
+              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2" style={{ background: '#FFC107' }}>
+                <span className="font-black text-lg" style={{ color: '#121212', fontFamily: 'Poppins, sans-serif' }}>JC</span>
               </div>
-              <div className="flex justify-between border-b border-brand-bgLight pb-2">
-                <span>Date: {selectedInvoice.date}</span>
-                <span>Vehicle: {selectedInvoice.vehicleDetails?.name.split('/')[0]}</span>
+              <h3 className="text-sm font-black" style={{ color: '#121212', fontFamily: 'Poppins, sans-serif' }}>Tax Invoice</h3>
+              <p className="text-[9px] mt-0.5" style={{ color: '#aaa' }}>Jolly Cabs · GSTIN: 36JCABS4422A1Z0</p>
+            </div>
+            <div className="flex flex-col gap-1.5 text-[10px] mb-4">
+              <div className="flex justify-between border-b pb-2 mb-1" style={{ borderColor: '#F5F5F5' }}>
+                <span style={{ color: '#aaa' }}>Invoice: {selectedInvoice.id.replace('BK_', 'INV_')}</span>
+                <span style={{ color: '#aaa' }}>{selectedInvoice.date}</span>
               </div>
-
-              <div className="flex flex-col gap-1.5 border-b border-brand-bgLight pb-3 font-semibold text-brand-textGray">
-                <div className="flex justify-between">
-                  <span>Base Trip Charge</span>
-                  <span>₹{selectedInvoice.fareBreakdown.base}</span>
+              {[
+                { label: 'Base Fare', val: selectedInvoice.fareBreakdown?.base },
+                { label: 'Extra KM', val: selectedInvoice.fareBreakdown?.extraKm > 0 ? selectedInvoice.fareBreakdown.extraKm : null },
+                { label: 'Driver Bata', val: selectedInvoice.fareBreakdown?.bata > 0 ? selectedInvoice.fareBreakdown.bata : null },
+                { label: 'Tolls', val: selectedInvoice.fareBreakdown?.tolls > 0 ? selectedInvoice.fareBreakdown.tolls : null },
+                { label: 'Convenience', val: selectedInvoice.fareBreakdown?.convenience },
+                { label: 'GST (5%)', val: selectedInvoice.fareBreakdown?.gst }
+              ].filter(item => item.val != null).map(({ label, val }) => (
+                <div key={label} className="flex justify-between">
+                  <span style={{ color: '#888' }}>{label}</span>
+                  <span className="font-semibold" style={{ color: '#121212' }}>₹{val}</span>
                 </div>
-                {selectedInvoice.fareBreakdown.extraKm > 0 && (
-                  <div className="flex justify-between">
-                    <span>Extra KM Charges</span>
-                    <span>₹{selectedInvoice.fareBreakdown.extraKm}</span>
-                  </div>
-                )}
-                {selectedInvoice.fareBreakdown.bata > 0 && (
-                  <div className="flex justify-between">
-                    <span>Driver Bata Allowance</span>
-                    <span>₹{selectedInvoice.fareBreakdown.bata}</span>
-                  </div>
-                )}
-                {selectedInvoice.fareBreakdown.tolls > 0 && (
-                  <div className="flex justify-between">
-                    <span>Toll Charges</span>
-                    <span>₹{selectedInvoice.fareBreakdown.tolls}</span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span>Convenience Fee</span>
-                  <span>₹{selectedInvoice.fareBreakdown.convenience}</span>
+              ))}
+              {selectedInvoice.fareBreakdown?.discount > 0 && (
+                <div className="flex justify-between" style={{ color: '#4CAF50' }}>
+                  <span>Discount</span>
+                  <span className="font-semibold">- ₹{selectedInvoice.fareBreakdown.discount}</span>
                 </div>
-                {selectedInvoice.fareBreakdown.discount > 0 && (
-                  <div className="flex justify-between text-brand-success font-bold">
-                    <span>Promo Discount</span>
-                    <span>- ₹{selectedInvoice.fareBreakdown.discount}</span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span>CGST + SGST (5%)</span>
-                  <span>₹{selectedInvoice.fareBreakdown.gst}</span>
-                </div>
-              </div>
-
-              <div className="flex justify-between font-bold text-xs text-brand-textDark mt-1">
-                <span>Total Amount Paid</span>
-                <span>₹{selectedInvoice.fareBreakdown.total}</span>
+              )}
+              <div className="flex justify-between font-black pt-2 border-t text-xs" style={{ borderColor: '#F5F5F5', color: '#121212' }}>
+                <span>Total Paid</span>
+                <span>₹{selectedInvoice.fareBreakdown?.total}</span>
               </div>
             </div>
-
-            <div className="flex flex-col gap-2 mt-5">
+            <div className="flex flex-col gap-2">
               <button
-                onClick={() => {
-                  alert('Invoice PDF Download Started! (Local demonstration file successfully saved)');
-                }}
-                className="w-full bg-brand-dark text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow"
+                onClick={() => alert('Invoice saved to Downloads!')}
+                className="w-full py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 text-white"
+                style={{ background: '#121212' }}
               >
-                <FileText className="w-4 h-4 text-brand-gold" />
-                Download PDF Invoice
+                <FileText className="w-4 h-4" style={{ color: '#FFC107' }} />
+                Download PDF
               </button>
               <button
                 onClick={() => setSelectedInvoice(null)}
-                className="w-full bg-brand-bgLight hover:bg-brand-gold/10 border border-brand-borderLight text-brand-textDark font-bold py-2.5 rounded-xl text-[10px] transition-colors"
+                className="w-full py-2.5 rounded-xl text-[10px] font-bold"
+                style={{ background: '#F5F5F5', color: '#888' }}
               >
                 Close
               </button>
@@ -281,4 +321,5 @@ export const Trips: React.FC = () => {
     </div>
   );
 };
+
 export default Trips;

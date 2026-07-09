@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  MapPin, Phone, MessageSquare, Car, Compass, ArrowRight, 
-  Gift, Star, Menu, Bell, User2, ShieldCheck, DollarSign, 
-  PhoneCall, Sparkles, ShieldAlert, Plane, Clock 
+import {
+  MapPin, Car, Compass, ArrowRight,
+  Gift, Star, Menu, Bell, User2, ShieldCheck, DollarSign,
+  PhoneCall, Sparkles, ShieldAlert, Plane, Clock, Navigation
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { useBookingStore } from '../../store/bookingStore';
@@ -11,25 +11,20 @@ import { useAdminStore } from '../../store/adminStore';
 import { useUiStore } from '../../store/uiStore';
 import { MOCK_ROUTES, MOCK_REVIEWS } from '../../services/mockData';
 import { TripType } from '../../types';
+import { getAssetUrl } from '../../utils/assets';
 
 export const Home: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { setBookingField, setRoute, clearBookingForm } = useBookingStore();
+  const { setBookingField, setRoute, clearBookingForm, activeBooking } = useBookingStore();
   const { banners, vehicles, loadAllAdminData } = useAdminStore();
   const { toggleDrawer } = useUiStore();
-
-  const [isLoadingScreen, setIsLoadingScreen] = React.useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load admin settings (pricing, active banners)
     loadAllAdminData();
-
-    // Premium shimmer loader simulator
-    const timer = setTimeout(() => {
-      setIsLoadingScreen(false);
-    }, 850);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => setIsLoading(false), 700);
+    return () => clearTimeout(t);
   }, [loadAllAdminData]);
 
   const handleQuickBooking = (type: TripType) => {
@@ -61,13 +56,7 @@ export const Home: React.FC = () => {
       setBookingField('pickupAddress', 'Kukatpally, Hyderabad, Telangana');
       setBookingField('dropAddress', 'Srisailam Mallikarjuna Temple, Andhra Pradesh');
       setBookingField('couponCode', 'SRISAILAM10');
-      setRoute(
-        'Kukatpally, Hyderabad, Telangana',
-        'Srisailam Mallikarjuna Temple, Andhra Pradesh',
-        215,
-        270,
-        150
-      );
+      setRoute('Kukatpally, Hyderabad, Telangana', 'Srisailam Mallikarjuna Temple, Andhra Pradesh', 215, 270, 150);
       setBookingField('selectedVehicleId', 'veh_sedan');
       navigate('/vehicles');
     } else if (bannerId === 'fb_outstation') {
@@ -77,169 +66,168 @@ export const Home: React.FC = () => {
     }
   };
 
-  if (isLoadingScreen) {
+  const activeStatuses = ['pending', 'accepted', 'driver_assigned', 'driver_reached', 'trip_started'];
+  const hasActiveRide = activeBooking && activeStatuses.includes(activeBooking.status);
+
+  if (isLoading) {
     return (
-      <div className="flex-1 flex flex-col bg-brand-bgLight overflow-hidden p-6 gap-6 min-h-0 select-none">
+      <div className="screen-body bg-[#F5F5F5]">
         {/* Skeleton Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white border border-brand-borderLight shimmer-bg" />
-            <div className="flex flex-col gap-1.5">
-              <div className="w-16 h-3 bg-brand-borderLight rounded-md shimmer-bg" />
-              <div className="w-28 h-4 bg-brand-borderLight rounded-md shimmer-bg" />
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <div className="w-10 h-10 rounded-xl bg-white border border-brand-borderLight shimmer-bg" />
-            <div className="w-10 h-10 rounded-xl bg-white border border-brand-borderLight shimmer-bg" />
-          </div>
-        </div>
-
-        {/* Skeleton Banner */}
-        <div className="w-full h-36 rounded-3xl bg-white border border-brand-borderLight p-5 flex flex-col justify-between">
-          <div className="flex flex-col gap-2">
-            <div className="w-20 h-4 bg-brand-borderLight rounded-md shimmer-bg" />
-            <div className="w-48 h-5 bg-brand-borderLight rounded-md shimmer-bg" />
-            <div className="w-32 h-3 bg-brand-borderLight rounded-md shimmer-bg" />
-          </div>
-          <div className="w-24 h-8 bg-brand-borderLight rounded-xl shimmer-bg" />
-        </div>
-
-        {/* Skeleton Grid Title */}
-        <div className="flex flex-col gap-1">
-          <div className="w-28 h-4 bg-brand-borderLight rounded-md shimmer-bg" />
-        </div>
-
-        {/* Skeleton Categories Grid */}
-        <div className="grid grid-cols-3 gap-3">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="h-16 rounded-2xl bg-white border border-brand-borderLight p-3 flex flex-col justify-center items-center gap-2">
-              <div className="w-12 h-3.5 bg-brand-borderLight rounded-md shimmer-bg" />
-            </div>
-          ))}
-        </div>
-
-        {/* Skeleton Routes List Title */}
-        <div className="flex flex-col gap-1">
-          <div className="w-32 h-4 bg-brand-borderLight rounded-md shimmer-bg" />
-        </div>
-
-        {/* Skeleton Routes List */}
-        <div className="flex flex-col gap-2.5">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="w-full h-16 bg-white rounded-2xl border border-brand-borderLight p-3 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-10 rounded-xl bg-brand-borderLight shimmer-bg" />
-                <div className="flex flex-col gap-1.5">
-                  <div className="w-32 h-3.5 bg-brand-borderLight rounded-md shimmer-bg" />
-                  <div className="w-24 h-2.5 bg-brand-borderLight rounded-md shimmer-bg" />
-                </div>
+        <div className="bg-[#FFC107] px-5 pt-6 pb-20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl shimmer-bg bg-black/10" />
+              <div className="flex flex-col gap-1.5">
+                <div className="w-16 h-2.5 shimmer-bg rounded bg-black/10" />
+                <div className="w-28 h-3.5 shimmer-bg rounded bg-black/10" />
               </div>
-              <div className="w-6 h-6 rounded-lg bg-brand-borderLight shimmer-bg" />
             </div>
-          ))}
+            <div className="flex gap-2">
+              <div className="w-10 h-10 rounded-xl shimmer-bg bg-black/10" />
+              <div className="w-10 h-10 rounded-xl shimmer-bg bg-black/10" />
+            </div>
+          </div>
+        </div>
+        <div className="px-5 -mt-12 flex flex-col gap-4">
+          <div className="bg-white rounded-3xl p-5 shadow-sm h-28 shimmer-bg" />
+          <div className="bg-white rounded-3xl p-5 shadow-sm h-48 shimmer-bg" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-brand-bgLight overflow-y-auto scrollbar-none pb-6 min-h-0 relative">
-      {/* 1. Header welcome - Taxi Yellow themed for brand prominence */}
-      <div 
-        className="bg-brand-gold text-brand-dark px-6 pt-6 pb-20 rounded-b-[36px] relative overflow-hidden flex-shrink-0 border-b border-brand-dark/10 shadow-md"
-      >
-        <div className="absolute w-44 h-44 bg-white/15 rounded-full blur-[50px] -top-10 -right-10 pointer-events-none" />
-        
-        <div className="flex items-center justify-between z-10 relative">
+    <div className="screen-body bg-[#F5F5F5]">
+
+      {/* ── Header ── */}
+      <div className="bg-[#FFC107] px-5 pt-6 pb-20 relative overflow-hidden flex-shrink-0">
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: 'radial-gradient(ellipse at 80% 20%, rgba(255,255,255,0.18) 0%, transparent 60%)'
+        }} />
+
+        <div className="flex items-center justify-between relative z-10">
           <div className="flex items-center gap-3">
-            <button 
-              type="button"
+            <button
               onClick={toggleDrawer}
-              className="w-10 h-10 rounded-xl bg-brand-dark/10 flex items-center justify-center border border-brand-dark/15 hover:bg-brand-dark/20 transition-all text-brand-dark"
+              className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95"
+              style={{ background: 'rgba(18,18,18,0.12)', border: '1px solid rgba(18,18,18,0.1)' }}
             >
-              <Menu className="w-5 h-5 stroke-[2.5]" />
+              <Menu className="w-5 h-5 stroke-[2.5]" style={{ color: '#121212' }} />
             </button>
             <div>
-              <span className="text-[9px] text-brand-dark/65 tracking-wider font-bold uppercase">Jolly Cabs</span>
-              <h3 className="text-base font-display font-extrabold text-brand-dark mt-0.5 truncate max-w-[150px]">
-                Hello, {user?.name || 'Jolly Rider'}
-              </h3>
+              <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: 'rgba(18,18,18,0.6)' }}>
+                Jolly Cabs
+              </span>
+              <h2
+                className="text-base font-black truncate max-w-[160px]"
+                style={{ color: '#121212', fontFamily: 'Poppins, sans-serif' }}
+              >
+                Hello, {user?.name?.split(' ')[0] || 'Rider'} 👋
+              </h2>
             </div>
           </div>
+
           <div className="flex gap-2">
-            <button 
-              type="button"
+            <button
               onClick={() => navigate('/notifications')}
-              className="w-10 h-10 rounded-xl bg-brand-dark/10 flex items-center justify-center border border-brand-dark/15 hover:bg-brand-dark/20 transition-all relative animate-bounce-gentle text-brand-dark"
-              title="Notifications"
+              className="w-10 h-10 rounded-xl flex items-center justify-center relative active:scale-95 transition-all"
+              style={{ background: 'rgba(18,18,18,0.12)', border: '1px solid rgba(18,18,18,0.1)' }}
             >
-              <Bell className="w-5 h-5 stroke-[2.5]" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-600 rounded-full border border-brand-gold" />
+              <Bell className="w-5 h-5 stroke-[2.5]" style={{ color: '#121212' }} />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-600 rounded-full border border-[#FFC107]" />
             </button>
-            
-            <button 
-              type="button"
+            <button
               onClick={() => navigate('/profile')}
-              className="w-10 h-10 rounded-xl bg-brand-dark/10 flex items-center justify-center border border-brand-dark/15 hover:bg-brand-dark/20 transition-all text-brand-dark"
-              title="Profile"
+              className="w-10 h-10 rounded-xl flex items-center justify-center active:scale-95 transition-all"
+              style={{ background: 'rgba(18,18,18,0.12)', border: '1px solid rgba(18,18,18,0.1)' }}
             >
-              <User2 className="w-5 h-5 stroke-[2.5]" />
+              <User2 className="w-5 h-5 stroke-[2.5]" style={{ color: '#121212' }} />
             </button>
           </div>
         </div>
 
-        {/* Current Location Bar */}
-        <div className="mt-4 flex items-center gap-2 text-[10px] text-brand-dark/85 font-bold">
-          <MapPin className="w-3.5 h-3.5 text-brand-dark stroke-[2.5]" />
-          <span className="truncate">Kukatpally, Hyderabad, Telangana, India</span>
+        {/* Location */}
+        <div className="mt-4 flex items-center gap-1.5 relative z-10">
+          <MapPin className="w-3.5 h-3.5 stroke-[2.5] flex-shrink-0" style={{ color: '#121212' }} />
+          <span className="text-[10px] font-bold truncate" style={{ color: 'rgba(18,18,18,0.75)' }}>
+            Kukatpally, Hyderabad, Telangana
+          </span>
         </div>
       </div>
 
-      {/* Main content body */}
-      <div className="px-6 -mt-12 z-10 flex flex-col gap-6">
-        
-        {/* 2. Cohesive Destination Search Box */}
-        <div className="bg-white rounded-3xl p-5 shadow-premium border border-brand-borderLight flex flex-col gap-3">
-          <h4 className="text-[10px] font-bold text-brand-textGray uppercase tracking-wider px-1">
+      {/* ── Body (overlaps yellow header) ── */}
+      <div className="px-4 -mt-12 flex flex-col gap-4 pb-6">
+
+        {/* Active Ride Banner */}
+        {hasActiveRide && (
+          <button
+            onClick={() => navigate(`/track/${activeBooking!.id}`)}
+            className="w-full bg-[#121212] rounded-3xl p-4 flex items-center gap-3 shadow-xl active:scale-[0.98] transition-all"
+            style={{ border: '1px solid rgba(255,193,7,0.2)' }}
+          >
+            <div
+              className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0"
+              style={{ background: '#FFC107' }}
+            >
+              <Navigation className="w-5 h-5 animate-pulse" style={{ color: '#121212' }} />
+            </div>
+            <div className="flex-1 text-left">
+              <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                Active Ride
+              </span>
+              <p className="text-xs font-bold mt-0.5" style={{ color: '#fff' }}>
+                {activeBooking!.status === 'pending' ? 'Finding driver...' :
+                 activeBooking!.status === 'accepted' ? `${activeBooking!.driverName} assigned` :
+                 activeBooking!.status === 'driver_reached' ? 'Driver arrived!' :
+                 activeBooking!.status === 'trip_started' ? 'Ride in progress' : 'Track your ride'}
+              </p>
+            </div>
+            <div className="px-3 py-1 rounded-xl" style={{ background: '#FFC107' }}>
+              <span className="text-[10px] font-black" style={{ color: '#121212' }}>Track →</span>
+            </div>
+          </button>
+        )}
+
+        {/* Search / Book Card */}
+        <div className="bg-white rounded-3xl p-5 shadow-sm" style={{ border: '1px solid #F0F0F0' }}>
+          <h4 className="text-[10px] font-bold uppercase tracking-wider mb-3" style={{ color: '#888' }}>
             Where can we take you?
           </h4>
-          
-          <div className="flex flex-col gap-3 relative">
-            {/* Visual connector line */}
-            <div className="absolute left-[21px] top-6 bottom-6 w-[1.5px] border-l border-dashed border-brand-textGray/30 z-0" />
+          <div className="flex flex-col gap-2.5 relative">
+            <div className="absolute left-[22px] top-7 bottom-7 border-l-2 border-dashed" style={{ borderColor: 'rgba(255,193,7,0.4)' }} />
 
-            <div 
-              className="flex items-center gap-3 bg-brand-bgLight border border-brand-borderLight rounded-2xl px-4 py-3 hover:border-brand-gold/60 transition-all cursor-pointer relative z-10" 
+            <button
               onClick={() => navigate('/booking')}
+              className="flex items-center gap-3 rounded-2xl px-4 py-3 active:scale-[0.98] transition-all relative z-10"
+              style={{ background: '#F8F8F8', border: '1.5px solid #EFEFEF' }}
             >
-              <div className="w-3 h-3 rounded-full bg-brand-gold border-2 border-white shadow flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <span className="text-[8px] text-brand-textGray block uppercase font-bold tracking-wide">Pickup Location</span>
-                <span className="text-xs font-bold text-brand-textDark truncate block mt-0.5">Enter pickup address...</span>
+              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: '#FFC107', border: '2px solid #fff', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }} />
+              <div className="flex-1 min-w-0 text-left">
+                <span className="text-[8px] font-bold uppercase tracking-wide block" style={{ color: '#aaa' }}>Pickup</span>
+                <span className="text-xs font-bold truncate block mt-0.5" style={{ color: '#888' }}>Enter pickup location...</span>
               </div>
-            </div>
-            
-            <div 
-              className="flex items-center gap-3 bg-brand-bgLight border border-brand-borderLight rounded-2xl px-4 py-3 hover:border-brand-gold/60 transition-all cursor-pointer relative z-10" 
+            </button>
+
+            <button
               onClick={() => navigate('/booking')}
+              className="flex items-center gap-3 rounded-2xl px-4 py-3 active:scale-[0.98] transition-all relative z-10"
+              style={{ background: '#F8F8F8', border: '1.5px solid #EFEFEF' }}
             >
-              <div className="w-3 h-3 bg-red-500 border-2 border-white shadow flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <span className="text-[8px] text-brand-textGray block uppercase font-bold tracking-wide">Drop Destination</span>
-                <span className="text-xs font-bold text-brand-textDark truncate block mt-0.5">Where are you heading?</span>
+              <div className="w-3 h-3 rounded flex-shrink-0" style={{ background: '#F44336', border: '2px solid #fff', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }} />
+              <div className="flex-1 min-w-0 text-left">
+                <span className="text-[8px] font-bold uppercase tracking-wide block" style={{ color: '#aaa' }}>Drop</span>
+                <span className="text-xs font-bold truncate block mt-0.5" style={{ color: '#888' }}>Where are you going?</span>
               </div>
-            </div>
+            </button>
           </div>
         </div>
 
-        {/* 3. Quick booking categories grid */}
-        <div className="bg-white rounded-3xl p-5 shadow-premium border border-brand-borderLight">
-          <h4 className="text-xs font-bold uppercase tracking-wider mb-4 flex items-center gap-2 text-brand-textGray">
-            <Compass className="w-4 h-4 text-brand-gold" />
-            Quick Book Services
+        {/* Quick Book Services */}
+        <div className="bg-white rounded-3xl p-5 shadow-sm" style={{ border: '1px solid #F0F0F0' }}>
+          <h4 className="text-[10px] font-bold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: '#888' }}>
+            <Compass className="w-3.5 h-3.5" style={{ color: '#FFC107' }} />
+            Quick Book
           </h4>
-          
           <div className="grid grid-cols-3 gap-3">
             {[
               { id: 'local', label: 'Local Ride', icon: Car },
@@ -247,111 +235,116 @@ export const Home: React.FC = () => {
               { id: 'airport_pickup', label: 'Airport Pick', icon: Plane },
               { id: 'outstation_round', label: 'Outstation', icon: MapPin },
               { id: 'rental', label: 'Day Rental', icon: Clock },
-              { id: 'outstation_oneway', label: 'One Way Out', icon: Compass }
+              { id: 'outstation_oneway', label: 'One Way', icon: Compass }
             ].map((cat) => {
               const Icon = cat.icon;
               return (
                 <button
                   key={cat.id}
                   onClick={() => handleQuickBooking(cat.id as TripType)}
-                  className="flex flex-col items-center justify-center p-3 rounded-2xl border border-brand-borderLight bg-brand-bgLight text-center transition-all hover:border-brand-gold hover:bg-white active:scale-95 gap-2"
+                  className="flex flex-col items-center justify-center p-3 rounded-2xl text-center transition-all active:scale-95 gap-1.5"
+                  style={{ background: '#F8F8F8', border: '1.5px solid #EFEFEF' }}
                 >
-                  <div className="w-8 h-8 rounded-full bg-brand-gold/10 flex items-center justify-center text-brand-gold">
-                    <Icon className="w-4 h-4" />
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'rgba(255,193,7,0.12)' }}>
+                    <Icon className="w-4 h-4" style={{ color: '#FFC107' }} />
                   </div>
-                  <span className="text-[10px] font-bold text-brand-textDark leading-tight">{cat.label}</span>
+                  <span className="text-[10px] font-bold leading-tight" style={{ color: '#121212' }}>{cat.label}</span>
                 </button>
               );
             })}
           </div>
-
           <button
             onClick={() => handleQuickBooking('local')}
-            className="w-full bg-brand-gold text-brand-dark text-xs font-black py-3.5 rounded-2xl mt-4 flex items-center justify-center gap-2 transition-all hover:bg-brand-lightGold shadow-gold-glow uppercase tracking-wider"
+            className="ripple-btn w-full py-3.5 rounded-2xl mt-4 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-wider transition-all active:scale-[0.98]"
+            style={{ background: '#FFC107', color: '#121212', fontFamily: 'Poppins, sans-serif' }}
           >
-            Create Custom Booking
-            <ArrowRight className="w-3.5 h-3.5 stroke-[3]" />
+            Book Custom Ride <ArrowRight className="w-3.5 h-3.5 stroke-[3]" />
           </button>
         </div>
 
-        {/* 4. Why Choose Jolly Cabs */}
-        <div className="flex flex-col gap-3">
-          <h4 className="text-xs font-black text-brand-dark uppercase tracking-wider px-1 flex items-center gap-2">
-            <span className="w-1 h-4 bg-brand-gold rounded-full" />
-            Why Choose Jolly Cabs?
+        {/* Why Choose Jolly Cabs */}
+        <div>
+          <h4 className="text-xs font-black uppercase tracking-wider mb-3 flex items-center gap-2 px-1" style={{ color: '#121212', fontFamily: 'Poppins, sans-serif' }}>
+            <span className="w-1 h-4 rounded-full" style={{ background: '#FFC107' }} />
+            Why Jolly Cabs?
           </h4>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { title: 'Verified Drivers', desc: 'Safety first. Background checked and professional pilots.', icon: ShieldCheck },
-              { title: 'Transparent Fares', desc: 'No hidden charges or surge pricing on pilgrimage trips.', icon: DollarSign },
-              { title: '24/7 Hotline Support', desc: 'Support line active through calls and WhatsApp live chat.', icon: PhoneCall },
-              { title: 'Sanitized Cabs', desc: 'Standardized cleanliness parameters on all rides.', icon: Sparkles }
-            ].map((item, idx) => {
+              { title: 'Verified Drivers', desc: 'Background checked professionals', icon: ShieldCheck },
+              { title: 'No Hidden Fares', desc: 'Transparent pricing always', icon: DollarSign },
+              { title: '24/7 Support', desc: 'Always available via call', icon: PhoneCall },
+              { title: 'Clean Cabs', desc: 'Sanitized before every ride', icon: Sparkles }
+            ].map((item, i) => {
               const Icon = item.icon;
               return (
-                <div key={idx} className="bg-white p-4 rounded-2xl border-l-4 border-l-brand-gold border border-brand-borderLight shadow-sm flex flex-col gap-1.5">
-                  <div className="w-8 h-8 rounded-xl bg-brand-gold flex items-center justify-center text-brand-dark">
-                    <Icon className="w-4 h-4" />
+                <div
+                  key={i}
+                  className="bg-white p-4 rounded-2xl flex flex-col gap-1.5"
+                  style={{ borderLeft: '4px solid #FFC107', border: '1px solid #F0F0F0', borderLeftWidth: '4px', borderLeftColor: '#FFC107' }}
+                >
+                  <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: '#FFC107' }}>
+                    <Icon className="w-4 h-4" style={{ color: '#121212' }} />
                   </div>
-                  <h5 className="text-[11px] font-extrabold text-brand-textDark">{item.title}</h5>
-                  <p className="text-[9.5px] text-brand-textGray leading-relaxed">{item.desc}</p>
+                  <h5 className="text-[11px] font-bold" style={{ color: '#121212' }}>{item.title}</h5>
+                  <p className="text-[9.5px] leading-relaxed" style={{ color: '#888' }}>{item.desc}</p>
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* 5. Special Travel Packages Banners */}
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between px-1">
-            <h4 className="text-xs font-black text-brand-dark uppercase tracking-wider flex items-center gap-2">
-              <span className="w-1 h-4 bg-brand-gold rounded-full" />
-              Special Travel Packages
-            </h4>
-            <span className="text-[10px] font-black text-brand-dark bg-brand-gold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-sm">Tap to Book</span>
-          </div>
-
-          {banners.filter(b => b.active).map((banner) => (
-            <div
-              key={banner.id}
-              onClick={() => handleBannerClick(banner.id)}
-              className="bg-[#121212] border border-brand-gold/15 rounded-3xl p-5 text-white shadow-premium relative overflow-hidden cursor-pointer hover:scale-[1.01] transition-all active:scale-[0.99]"
-            >
-              <div className="absolute right-2 -bottom-4 opacity-10">
-                <Gift className="w-32 h-32 text-brand-gold" />
-              </div>
-              <span className="px-2.5 py-0.5 bg-brand-gold/10 border border-brand-gold/25 rounded-full text-[9px] font-bold text-brand-gold uppercase tracking-wide inline-block">
-                {banner.festivalName}
-              </span>
-              <h4 className="text-base font-bold font-display mt-2 leading-snug max-w-[85%]">
-                {banner.title}
+        {/* Special Packages */}
+        {banners.filter(b => b.active).length > 0 && (
+          <div>
+            <div className="flex items-center justify-between px-1 mb-3">
+              <h4 className="text-xs font-black uppercase tracking-wider flex items-center gap-2" style={{ color: '#121212', fontFamily: 'Poppins, sans-serif' }}>
+                <span className="w-1 h-4 rounded-full" style={{ background: '#FFC107' }} />
+                Special Packages
               </h4>
-              <p className="text-[11px] text-brand-textGray mt-1 leading-normal max-w-[90%]">
-                {banner.subtitle}
-              </p>
-              <div className="mt-4 flex items-center gap-3">
-                <span className="text-[10px] font-semibold text-white/90">Use Code:</span>
-                <span className="bg-white/5 border border-white/10 px-3 py-1 rounded-xl text-xs font-bold font-mono tracking-wider text-brand-gold">
-                  {banner.couponCode}
-                </span>
-                <span className="text-[10px] font-bold text-brand-gold bg-brand-gold/10 px-2.5 py-1 rounded-xl ml-auto border border-brand-gold/20">
-                  Book package →
-                </span>
-              </div>
+              <span className="text-[10px] font-black px-2.5 py-1 rounded-lg" style={{ background: '#FFC107', color: '#121212' }}>Tap to Book</span>
             </div>
-          ))}
-        </div>
+            <div className="flex flex-col gap-3">
+              {banners.filter(b => b.active).map((banner) => (
+                <button
+                  key={banner.id}
+                  onClick={() => handleBannerClick(banner.id)}
+                  className="w-full text-left rounded-3xl p-5 relative overflow-hidden active:scale-[0.98] transition-all"
+                  style={{ background: '#121212', border: '1px solid rgba(255,193,7,0.15)' }}
+                >
+                  <div className="absolute right-3 -bottom-4 opacity-10 pointer-events-none">
+                    <Gift className="w-28 h-28" style={{ color: '#FFC107' }} />
+                  </div>
+                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide mb-2" style={{ background: 'rgba(255,193,7,0.1)', color: '#FFC107', border: '1px solid rgba(255,193,7,0.25)' }}>
+                    {banner.festivalName}
+                  </span>
+                  <h4 className="text-base font-bold leading-snug max-w-[85%]" style={{ color: '#fff', fontFamily: 'Poppins, sans-serif' }}>
+                    {banner.title}
+                  </h4>
+                  <p className="text-[11px] mt-1 max-w-[90%]" style={{ color: '#888' }}>{banner.subtitle}</p>
+                  <div className="mt-4 flex items-center gap-3">
+                    <span className="text-[10px] font-semibold" style={{ color: 'rgba(255,255,255,0.8)' }}>Code:</span>
+                    <span className="px-3 py-1 rounded-xl text-xs font-bold font-mono tracking-wider" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#FFC107' }}>
+                      {banner.couponCode}
+                    </span>
+                    <span className="ml-auto text-[10px] font-bold px-2.5 py-1 rounded-xl" style={{ background: 'rgba(255,193,7,0.1)', color: '#FFC107', border: '1px solid rgba(255,193,7,0.2)' }}>
+                      Book →
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
-        {/* 6. Popular regional route shortcuts */}
+        {/* Popular Routes */}
         <div>
           <div className="flex items-center justify-between mb-3 px-1">
-            <h4 className="text-sm font-black text-brand-dark tracking-tight flex items-center gap-2">
-              <span className="w-1 h-4 bg-brand-gold rounded-full" />
+            <h4 className="text-xs font-black uppercase tracking-wider flex items-center gap-2" style={{ color: '#121212', fontFamily: 'Poppins, sans-serif' }}>
+              <span className="w-1 h-4 rounded-full" style={{ background: '#FFC107' }} />
               Popular Routes
             </h4>
-            <span className="text-[10px] font-black text-brand-dark bg-brand-gold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-sm">Best Prices</span>
+            <span className="text-[10px] font-black px-2.5 py-1 rounded-lg" style={{ background: '#FFC107', color: '#121212' }}>Best Prices</span>
           </div>
-
           <div className="flex flex-col gap-2.5">
             {MOCK_ROUTES.filter(r => ['route_airport_drop', 'route_srisailam', 'route_tirupati', 'route_vijayawada'].includes(r.id)).map((route) => {
               const getRouteImage = (id: string) => {
@@ -364,27 +357,22 @@ export const Home: React.FC = () => {
                 <button
                   key={route.id}
                   onClick={() => handlePopularRouteClick(route)}
-                  className="w-full bg-white p-3 rounded-2xl border border-brand-borderLight shadow-sm flex items-center justify-between text-left hover:scale-[1.01] hover:border-brand-gold/30 transition-all group flex-shrink-0"
+                  className="w-full bg-white p-3 rounded-2xl flex items-center justify-between text-left active:scale-[0.98] transition-all"
+                  style={{ border: '1px solid #F0F0F0' }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-10 rounded-xl bg-brand-bgLight flex items-center justify-center flex-shrink-0 overflow-hidden border border-brand-borderLight">
-                      <img 
-                        src={getRouteImage(route.id)}
-                        alt={route.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
+                    <div className="w-12 h-10 rounded-xl overflow-hidden flex-shrink-0" style={{ border: '1px solid #F0F0F0' }}>
+                      <img src={getAssetUrl(getRouteImage(route.id))} alt={route.name} className="w-full h-full object-cover" />
                     </div>
                     <div>
-                      <h5 className="text-[11px] font-bold truncate max-w-[170px] text-brand-textDark">
-                        {route.name}
-                      </h5>
-                      <p className="text-[9.5px] text-brand-textGray mt-0.5">
-                        Distance: <span className="font-semibold text-brand-textDark">{route.distanceKm} KM</span> • {route.durationMin} mins
+                      <h5 className="text-[11px] font-bold truncate max-w-[170px]" style={{ color: '#121212' }}>{route.name}</h5>
+                      <p className="text-[9.5px] mt-0.5" style={{ color: '#888' }}>
+                        {route.distanceKm} KM · {route.durationMin} mins
                       </p>
                     </div>
                   </div>
-                  <div className="w-6 h-6 rounded-lg bg-brand-bgLight group-hover:bg-brand-gold flex items-center justify-center text-brand-textGray group-hover:text-brand-dark transition-all">
-                    <ArrowRight className="w-3 h-3" />
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: '#F5F5F5' }}>
+                    <ArrowRight className="w-3 h-3" style={{ color: '#888' }} />
                   </div>
                 </button>
               );
@@ -392,49 +380,37 @@ export const Home: React.FC = () => {
           </div>
         </div>
 
-        {/* 7. Premium Fleet showcase */}
+        {/* Premium Fleet */}
         <div>
           <div className="flex items-center justify-between mb-3 px-1">
-            <h4 className="text-sm font-black text-brand-dark tracking-tight flex items-center gap-2">
-              <span className="w-1 h-4 bg-brand-gold rounded-full" />
-              Premium Fleet
+            <h4 className="text-xs font-black uppercase tracking-wider flex items-center gap-2" style={{ color: '#121212', fontFamily: 'Poppins, sans-serif' }}>
+              <span className="w-1 h-4 rounded-full" style={{ background: '#FFC107' }} />
+              Our Fleet
             </h4>
-            <span className="text-[10px] font-bold text-brand-gold uppercase tracking-wider">Swipe →</span>
+            <span className="text-[10px] font-bold" style={{ color: '#FFC107' }}>Swipe →</span>
           </div>
-
           <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
             {vehicles.map((v) => (
-              <div 
+              <div
                 key={v.id}
-                className="bg-white rounded-2xl border border-brand-borderLight p-4 shadow-sm min-w-[200px] w-[200px] snap-center flex-shrink-0 flex flex-col justify-between"
+                className="bg-white rounded-2xl p-4 min-w-[190px] w-[190px] snap-center flex-shrink-0 flex flex-col justify-between"
+                style={{ border: '1px solid #F0F0F0' }}
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="px-2 py-0.5 bg-brand-dark/5 rounded-full text-[9px] font-semibold text-brand-textGray">
-                      {v.category}
-                    </span>
-                    <span className="text-xs font-bold text-brand-gold flex items-center gap-0.5">
-                      ★ 4.9
-                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-semibold" style={{ background: '#F5F5F5', color: '#888' }}>{v.category}</span>
+                    <span className="text-xs font-bold" style={{ color: '#FFC107' }}>★ 4.9</span>
                   </div>
-                  
-                  {/* Rendered vehicle JPEG */}
-                  <div className="h-24 w-full bg-white rounded-xl flex items-center justify-center my-3 overflow-hidden border border-brand-borderLight shadow-sm p-1">
-                    <img 
-                      src={v.image} 
-                      alt={v.name} 
-                      className="h-full w-full object-contain hover:scale-105 transition-transform duration-500"
-                    />
+                  <div className="h-20 w-full rounded-xl flex items-center justify-center my-3 overflow-hidden" style={{ background: '#FAFAFA', border: '1px solid #F0F0F0' }}>
+                    <img src={getAssetUrl(v.image)} alt={v.name} className="h-full w-full object-contain" />
                   </div>
-
-                  <h5 className="text-xs font-bold text-brand-textDark truncate">{v.name}</h5>
-                  <p className="text-[10px] text-brand-textGray mt-1">
-                    Rate: <span className="font-bold text-brand-textDark">₹{v.pricing.pricePerKm}/KM</span>
-                  </p>
+                  <h5 className="text-xs font-bold truncate" style={{ color: '#121212' }}>{v.name}</h5>
+                  <p className="text-[10px] mt-1" style={{ color: '#888' }}>₹{v.pricing.pricePerKm}/KM</p>
                 </div>
                 <button
                   onClick={() => handleQuickBooking('local')}
-                  className="w-full bg-brand-gold text-brand-dark text-[10px] font-black py-2 rounded-xl mt-3 transition-all hover:bg-brand-lightGold shadow-sm uppercase tracking-wider"
+                  className="w-full py-2 rounded-xl mt-3 text-[10px] font-black uppercase tracking-wider active:scale-95 transition-all"
+                  style={{ background: '#FFC107', color: '#121212' }}
                 >
                   Book Now
                 </button>
@@ -443,60 +419,53 @@ export const Home: React.FC = () => {
           </div>
         </div>
 
-        {/* 8. Emergency SOS Card */}
-        <div className="bg-red-500/5 border border-red-500/15 rounded-3xl p-5 flex items-center justify-between gap-4">
+        {/* SOS Card */}
+        <div className="rounded-3xl p-5 flex items-center justify-between gap-4" style={{ background: 'rgba(244,67,54,0.05)', border: '1px solid rgba(244,67,54,0.15)' }}>
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500">
-              <ShieldAlert className="w-5 h-5 animate-pulse" />
+            <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(244,67,54,0.1)', border: '1px solid rgba(244,67,54,0.2)' }}>
+              <ShieldAlert className="w-5 h-5 animate-pulse" style={{ color: '#F44336' }} />
             </div>
             <div>
-              <h5 className="text-xs font-bold text-red-600 uppercase">Emergency Safety Help</h5>
-              <p className="text-[9.5px] text-brand-textGray mt-0.5 leading-normal max-w-[160px]">
-                Need immediate safety help on trip? Dial emergency police hotline.
-              </p>
+              <h5 className="text-xs font-bold uppercase" style={{ color: '#D32F2F' }}>Emergency Help</h5>
+              <p className="text-[9.5px] mt-0.5 max-w-[160px]" style={{ color: '#888' }}>Need immediate safety help? Dial emergency.</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={() => window.open('tel:7981232371')}
-            className="bg-red-500 hover:bg-red-600 text-white text-[10px] font-bold px-4 py-2.5 rounded-xl transition-all shadow-md"
+            className="px-4 py-2.5 rounded-xl text-[10px] font-bold text-white transition-colors active:scale-95"
+            style={{ background: '#F44336' }}
           >
-            SOS Call
+            SOS
           </button>
         </div>
 
-        {/* 9. Customer Testimonials */}
-        <div className="mb-4">
-          <h4 className="text-sm font-black text-brand-dark tracking-tight mb-3 px-1 flex items-center gap-2">
-            <span className="w-1 h-4 bg-brand-gold rounded-full" />
-            What Our Customers Say
+        {/* Reviews */}
+        <div>
+          <h4 className="text-xs font-black uppercase tracking-wider mb-3 px-1 flex items-center gap-2" style={{ color: '#121212', fontFamily: 'Poppins, sans-serif' }}>
+            <span className="w-1 h-4 rounded-full" style={{ background: '#FFC107' }} />
+            Customer Reviews
           </h4>
           <div className="flex flex-col gap-2.5">
             {MOCK_REVIEWS.map((rev) => (
-              <div 
-                key={rev.id}
-                className="bg-white rounded-2xl p-4 border border-brand-borderLight border-l-4 border-l-brand-gold shadow-sm flex flex-col gap-1.5"
-              >
+              <div key={rev.id} className="bg-white rounded-2xl p-4 flex flex-col gap-1.5" style={{ border: '1px solid #F0F0F0', borderLeft: '4px solid #FFC107' }}>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-extrabold text-brand-dark">{rev.customerName}</span>
+                  <span className="text-xs font-bold" style={{ color: '#121212' }}>{rev.customerName}</span>
                   <div className="flex items-center gap-0.5">
                     {[...Array(rev.rating)].map((_, i) => (
-                      <Star key={i} className="w-3 h-3 fill-brand-gold text-brand-gold" />
+                      <Star key={i} className="w-3 h-3 fill-[#FFC107] text-[#FFC107]" />
                     ))}
                   </div>
                 </div>
-                <p className="text-[11px] text-brand-textGray italic leading-relaxed">
-                  "{rev.comment}"
-                </p>
-                <span className="text-[9px] font-black text-brand-dark bg-brand-gold/15 px-2 py-0.5 rounded-lg self-end uppercase tracking-wider">
+                <p className="text-[11px] leading-relaxed italic" style={{ color: '#888' }}>"{rev.comment}"</p>
+                <span className="self-end text-[9px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider" style={{ background: 'rgba(255,193,7,0.15)', color: '#121212' }}>
                   {rev.category}
                 </span>
               </div>
             ))}
           </div>
         </div>
-        
-      </div>
 
+      </div>
     </div>
   );
 };

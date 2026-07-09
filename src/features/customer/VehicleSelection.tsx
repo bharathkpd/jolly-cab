@@ -4,6 +4,7 @@ import { ArrowLeft, User, Briefcase, Eye, Flame, Moon, Clock, Route } from 'luci
 import { useBookingStore } from '../../store/bookingStore';
 import { useAdminStore } from '../../store/adminStore';
 import { calculateFare } from '../../services/fareEngine';
+import { getAssetUrl } from '../../utils/assets';
 
 export const VehicleSelection: React.FC = () => {
   const navigate = useNavigate();
@@ -69,12 +70,12 @@ export const VehicleSelection: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-brand-bgLight">
+    <div className="flex-1 flex flex-col bg-brand-bgLight min-h-0">
       {/* Route Info Header Card */}
       <div className="bg-brand-dark text-white p-5 rounded-b-[32px] flex flex-col gap-3 shadow-md flex-shrink-0">
         <div className="flex items-center gap-3">
           <button 
-            onClick={() => navigate('/booking')} 
+            onClick={() => navigate(-1)} 
             className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center hover:bg-white/15 transition-all"
           >
             <ArrowLeft className="w-4 h-4 text-white" />
@@ -192,7 +193,7 @@ export const VehicleSelection: React.FC = () => {
                   {/* Real car image */}
                   <div className="w-24 h-16 bg-white rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden border border-brand-borderLight shadow-sm p-0.5">
                     <img 
-                      src={v.image} 
+                      src={getAssetUrl(v.image)} 
                       alt={v.name} 
                       className="h-full w-full object-contain" 
                     />
