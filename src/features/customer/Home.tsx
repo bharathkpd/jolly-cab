@@ -533,7 +533,7 @@ export const Home: React.FC = () => {
                   className="w-full bg-white p-3 rounded-2xl flex items-center justify-between text-left active:scale-[0.99] transition-all border border-[#F0F0F0] shadow-sm hover:border-brand-gold/15"
                 >
                   <div className="flex items-center gap-3.5">
-                    <div className="w-13 h-10.5 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100 bg-gray-50">
+                    <div className="w-16 h-12 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100 bg-gray-50">
                       <img src={getAssetUrl(getRouteImage(route.id))} alt={route.name} className="w-full h-full object-cover" />
                     </div>
                     <div>
