@@ -139,6 +139,7 @@ const AuthBootstrap = () => {
 
 const AppShell = () => {
   const { initializeAuth, authReady } = useAuthStore();
+  const navigate = useNavigate();
   const [splashDone, setSplashDone] = useState(() => {
     // Splash only once per session (app launch)
     return sessionStorage.getItem('jolly_cabs_splash_shown') === 'true';
@@ -176,7 +177,7 @@ const AppShell = () => {
                     onComplete={() => {
                       localStorage.setItem('jolly_cabs_onboarding', 'true');
                       // After onboarding, go to auth
-                      window.location.hash = '#/auth';
+                      navigate('/auth', { replace: true });
                     }}
                   />
                 }
